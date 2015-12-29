@@ -19,7 +19,8 @@ Basic usage:
         print(device.name)
         print(device.actual_temperature)
 
-This api was build for the integration of the Max! thermostats into `Home Assistent <https://home-assistant.io>`__.
+This api was build for the integration of the Max! thermostats into `Home Assistant <https://home-assistant.io>`__ and
+does only cover the functions needed for the integration.
 
 Thanks to:
 
