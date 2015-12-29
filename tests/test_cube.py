@@ -8,6 +8,7 @@ from maxcube.device import \
     MAX_THERMOSTAT_PLUS, \
     MAX_DEVICE_MODE_AUTOMATIC, \
     MAX_DEVICE_MODE_MANUAL
+from maxcube.thermostat import MaxThermostat
 
 INIT_RESPONSE = \
     'H:KEQ0566338,0b6475,0113,00000000,74b7b6f7,00,32,0f0c19,1527,03,0000\n\r' \
@@ -34,10 +35,14 @@ INIT_RESPONSE = \
 class MaxCubeConnectionMock(MaxCubeConnection):
     def __init__(self):
         super().__init__(None, None)
+        self.command = None
 
     def connect(self):
         self.response = INIT_RESPONSE
         return
+
+    def send(self, command):
+        self.command = command
 
     def disconnect(self):
         return
@@ -115,6 +120,12 @@ class TestMaxCube(unittest.TestCase):
         device.type = MAX_THERMOSTAT_PLUS
         self.assertEqual(True, self.cube.is_thermostat(device))
 
+    def test_set_target_temperature(self):
+        self.cube.set_target_temperature(self.cube.devices[0], 24.5)
+        self.assertEqual('s:AARAAAAABrxTAXE=\r\n', self.cube.connection.command)
+        self.assertEqual(24.5, self.cube.devices[0].target_temperature)
+        self.cube.set_target_temperature(self.cube.devices[0], 24.6)
+        self.assertEqual(24.5, self.cube.devices[0].target_temperature)
 
 
 

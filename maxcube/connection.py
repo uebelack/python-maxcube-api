@@ -35,8 +35,11 @@ class MaxCubeConnection:
                 break
         self.response = buffer.decode('utf-8')
 
+    def send(self, command):
+        self.socket.send(command.encode('utf-8'))
+        self.read()
+
     def disconnect(self):
         if self.socket:
-            # self.send_message(QuitMessage())??
             self.socket.close()
         self.socket = None

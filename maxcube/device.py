@@ -15,4 +15,5 @@ class MaxDevice:
     def __init__(self):
         self.type = None
         self.rf_address = None
+        self.room_id = None
         self.name = None

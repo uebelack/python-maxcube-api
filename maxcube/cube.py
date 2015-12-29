@@ -1,5 +1,6 @@
 import base64
 import struct
+
 from maxcube.device import \
     MaxDevice, \
     MAX_CUBE, \
@@ -26,10 +27,7 @@ class MaxCube(MaxDevice):
         self.init()
 
     def init(self):
-        self.connection.connect()
-        response = self.connection.response
-        self.parse_response(response)
-        self.connection.disconnect()
+        self.update()
         logger.info('Cube (rf=%s, firmware=%s)' % (self.rf_address, self.firmware_version))
         for device in self.devices:
             if self.is_thermostat(device):
@@ -39,6 +37,12 @@ class MaxCube(MaxDevice):
                                device.target_temperature))
             else:
                 logger.info('Device (rf=%s, name=%s' % (device.rf_address, device.name))
+
+    def update(self):
+        self.connection.connect()
+        response = self.connection.response
+        self.parse_response(response)
+        self.connection.disconnect()
 
     def device_by_rf(self, rf):
         for device in self.devices:
@@ -95,6 +99,7 @@ class MaxCube(MaxDevice):
             device_rf_address = ''.join("%X" % x for x in data[pos + 1: pos + 1 + 3])
             device_name_length = data[pos + 14]
             device_name = data[pos + 15:pos + 15 + device_name_length].decode('utf-8')
+            room_id = data[pos + 15 + device_name_length]
 
             device = self.device_by_rf(device_rf_address)
 
@@ -108,6 +113,7 @@ class MaxCube(MaxDevice):
             if device:
                 device.type = device_type
                 device.rf_address = device_rf_address
+                device.room_id = room_id
                 device.name = device_name
 
             pos += 1 + 3 + 10 + device_name_length + 2
@@ -134,6 +140,26 @@ class MaxCube(MaxDevice):
                     device.actual_temperature = None
                 device.target_temperature = (data[pos + 7] & 0x7F) / 2
             pos += length
+
+    def set_target_temperature(self, thermostat, temperature):
+        rf_address = thermostat.rf_address
+        if len(rf_address) < 6:
+            rf_address = '0' + rf_address
+        room = str(thermostat.room_id)
+        if thermostat.room_id < 10:
+            room = '0' + room
+        target_temperature = int(temperature * 2)
+        target_temperature |= (1 << 6)
+        target_temperature &= ~ (1 << 7)
+
+        byte_cmd = '000440000000' + rf_address + room + hex(target_temperature)[2:]
+        command = 's:' + base64.b64encode(bytearray.fromhex(byte_cmd)).decode('utf-8') + '\r\n'
+
+        self.connection.connect()
+        self.connection.send(command)
+        self.connection.disconnect()
+        thermostat.target_temperature = int(temperature * 2)/2
+
 
     @classmethod
     def resolve_device_mode(cls, bits):
