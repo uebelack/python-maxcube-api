@@ -8,7 +8,8 @@ A python api to control the Max! Cube thermostats:
 
 Basic usage:
 
-.. code::python
+.. code:: python
+
     from maxcube.cube import MaxCube
     from maxcube.connection import MaxCubeConnection
 
@@ -21,8 +22,9 @@ Basic usage:
 This api was build for the integration of the Max! thermostats into `Home Assistent <https://home-assistant.io>`__.
 
 Thanks to:
-- `https://github.com/Bouni/max-cube-protocol <https://github.com/Bouni/max-cube-protocol>`__
-- `https://github.com/ercpe/pymax <https://github.com/ercpe/pymax>`__
-- `https://github.com/aleszoulek/maxcube <https://github.com/aleszoulek/maxcube>`__
-- `openhab integration <https://github.com/openhab/openhab2/tree/master/addons/binding/org.openhab.binding.max>`__
+
+-  `https://github.com/Bouni/max-cube-protocol <https://github.com/Bouni/max-cube-protocol>`__
+-  `https://github.com/ercpe/pymax <https://github.com/ercpe/pymax>`__
+-  `https://github.com/aleszoulek/maxcube <https://github.com/aleszoulek/maxcube>`__
+-  `openhab integration <https://github.com/openhab/openhab2/tree/master/addons/binding/org.openhab.binding.max>`__
 
