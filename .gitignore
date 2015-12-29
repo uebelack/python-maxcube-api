@@ -1,0 +1,4 @@
+.idea
+maxcube.egg-info
+maxcube/__pycache__
+tests/__pycache__
