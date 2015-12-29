@@ -6,7 +6,7 @@ python:
 install:
 - pip install coveralls
 
-script: make travis
+script: nosetests
 
 after_success:
   - coveralls
