@@ -6,7 +6,7 @@ python:
 install:
 - pip install coveralls
 
-script: nosetests
+script: run --source maxcube setup.py test
 
 after_success:
   - coveralls

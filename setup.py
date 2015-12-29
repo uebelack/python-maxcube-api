@@ -17,5 +17,6 @@ setup(
     author_email='david@uebelacker.ch',
     url='https://github.com/goodfield/python-maxcube-api.git',
     license=license,
-    packages=['maxcube']
+    packages=['maxcube'],
+    test_suite="tests.maxcube_suite"
 )
