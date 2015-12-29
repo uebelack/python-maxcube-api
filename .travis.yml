@@ -6,7 +6,7 @@ python:
 install:
 - pip install coveralls
 
-script: coverage run --source maxcube setup.py test
+script: coverage run setup.py test
 
 after_success:
   - coveralls
