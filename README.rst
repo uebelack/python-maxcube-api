@@ -30,9 +30,9 @@ Thanks to:
 -  `openhab integration <https://github.com/openhab/openhab2/tree/master/addons/binding/org.openhab.binding.max>`__
 
 .. |Build Status| image:: https://travis-ci.org/goodfield/python-maxcube-api.svg?branch=master
-:target: https://travis-ci.org/goodfield/python-maxcube-api
+   :target: https://travis-ci.org/goodfield/python-maxcube-api
 .. |Coverage Status| image:: https://coveralls.io/repos/goodfield/python-maxcube-api/badge.svg?branch=master&service=github
-:target: https://coveralls.io/github/goodfield/python-maxcube-api?branch=master
+   :target: https://coveralls.io/github/goodfield/python-maxcube-api?branch=master
 
 
 
