@@ -144,6 +144,7 @@ class MaxCube(MaxDevice):
             pos += length
 
     def set_target_temperature(self, thermostat, temperature):
+        logger.debug('Setting temperature for %s to %s!' %(thermostat.rf_address, temperature))
         rf_address = thermostat.rf_address
         if len(rf_address) < 6:
             rf_address = '0' + rf_address
@@ -159,6 +160,7 @@ class MaxCube(MaxDevice):
 
         self.connection.connect()
         self.connection.send(command)
+        logger.debug('Response: ' + self.connection.response)
         self.connection.disconnect()
         thermostat.target_temperature = int(temperature * 2)/2
 
