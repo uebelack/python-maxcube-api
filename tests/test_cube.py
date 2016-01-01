@@ -8,7 +8,6 @@ from maxcube.device import \
     MAX_THERMOSTAT_PLUS, \
     MAX_DEVICE_MODE_AUTOMATIC, \
     MAX_DEVICE_MODE_MANUAL
-from maxcube.thermostat import MaxThermostat
 
 INIT_RESPONSE = \
     'H:KEQ0566338,0b6475,0113,00000000,74b7b6f7,00,32,0f0c19,1527,03,0000\n\r' \
@@ -99,7 +98,7 @@ class TestMaxCube(unittest.TestCase):
         self.cube.parse_l_message('L:Cwa8U/ESGAAiAAAACwa8WgkSGAAiAAAACwa8XAkSGAUiAAAACwirggMSGAUiAAAA')
         device = self.cube.devices[0]
         self.assertEqual(MAX_DEVICE_MODE_AUTOMATIC, device.mode)
-        self.assertEqual(0.0, device.actual_temperature)
+        self.assertEqual(23.6, device.actual_temperature)
         self.assertEqual(17.0, device.target_temperature)
         self.cube.parse_l_message('L:Cwa8U/ESGQkhALMACwa8WgkSGQAhAMAACwa8XAkSGQUhALIACwirggMSGQUhAAAA')
         device = self.cube.devices[0]

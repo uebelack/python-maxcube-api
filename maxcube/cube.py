@@ -135,7 +135,9 @@ class MaxCube(MaxDevice):
                 bits1, bits2 = struct.unpack('BB', bytearray(data[5:7]))
                 device.mode = self.resolve_device_mode(bits2)
                 if device.mode == MAX_DEVICE_MODE_MANUAL or device.mode == MAX_DEVICE_MODE_AUTOMATIC:
-                    device.actual_temperature = ((data[pos + 8] & 0xFF) * 256 + (data[pos + 9] & 0xFF)) / 10
+                    actual_temperature = ((data[pos + 8] & 0xFF) * 256 + (data[pos + 9] & 0xFF)) / 10
+                    if actual_temperature != 0:
+                        device.actual_temperature = actual_temperature
                 else:
                     device.actual_temperature = None
                 device.target_temperature = (data[pos + 7] & 0x7F) / 2
@@ -159,7 +161,6 @@ class MaxCube(MaxDevice):
         self.connection.send(command)
         self.connection.disconnect()
         thermostat.target_temperature = int(temperature * 2)/2
-
 
     @classmethod
     def resolve_device_mode(cls, bits):

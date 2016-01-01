@@ -12,7 +12,7 @@ class MaxCubeConnection:
         self.response = None
 
     def connect(self):
-        logger.info('Connecting to Max! Cube at ' + self.host + ':' + str(self.port))
+        logger.debug('Connecting to Max! Cube at ' + self.host + ':' + str(self.port))
         if self.socket:
             self.disconnect()
 
