@@ -15,9 +15,13 @@ Basic usage:
 
     cube = MaxCube(MaxCubeConnection('192.168.0.20', 62910))
 
+    cube.connect()
+
     for device in cube.devices:
         print(device.name)
         print(device.actual_temperature)
+
+    cube.disconnect()
 
 This api was build for the integration of the Max! thermostats into `Home Assistant <https://home-assistant.io>`__ and
 does only cover the functions needed for the integration.

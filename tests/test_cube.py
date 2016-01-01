@@ -52,6 +52,7 @@ class TestMaxCube(unittest.TestCase):
 
     def setUp(self):
         self.cube = MaxCube(MaxCubeConnectionMock())
+        self.cube.connect()
 
     def test_init(self):
         self.assertEqual('0b6475', self.cube.rf_address)

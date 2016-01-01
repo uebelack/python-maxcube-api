@@ -41,5 +41,6 @@ class MaxCubeConnection:
 
     def disconnect(self):
         if self.socket:
+            self.send('q:\r\n')
             self.socket.close()
         self.socket = None

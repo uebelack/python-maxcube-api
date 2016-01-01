@@ -24,25 +24,18 @@ class MaxCube(MaxDevice):
         self.type = MAX_CUBE
         self.firmware_version = None
         self.devices = []
-        self.init()
 
-    def init(self):
-        self.update()
-        logger.info('Cube (rf=%s, firmware=%s)' % (self.rf_address, self.firmware_version))
-        for device in self.devices:
-            if self.is_thermostat(device):
-                logger.info('Thermostat (rf=%s, name=%s, mode=%s, min=%s, max=%s, actual=%s, target=%s)'
-                            % (device.rf_address, device.name, device.mode, device.min_temperature,
-                               device.max_temperature, device.actual_temperature,
-                               device.target_temperature))
-            else:
-                logger.info('Device (rf=%s, name=%s' % (device.rf_address, device.name))
-
-    def update(self):
+    def connect(self):
         self.connection.connect()
         response = self.connection.response
         self.parse_response(response)
+
+    def disconnect(self):
         self.connection.disconnect()
+
+    @property
+    def connected(self):
+        return self.connection.socket
 
     def device_by_rf(self, rf):
         for device in self.devices:
