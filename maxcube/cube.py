@@ -33,6 +33,11 @@ class MaxCube(MaxDevice):
     def disconnect(self):
         self.connection.disconnect()
 
+    def update(self):
+        self.connection.send('l:\r\n')
+        response = self.connection.response
+        self.parse_response(response)
+
     @property
     def connected(self):
         return self.connection.socket
