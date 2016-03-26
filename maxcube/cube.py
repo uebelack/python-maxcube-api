@@ -116,8 +116,10 @@ class MaxCube(MaxDevice):
                 if device_type == MAX_THERMOSTAT or device_type == MAX_THERMOSTAT_PLUS:
                     device = MaxThermostat()
 
+                if device:
+                    self.devices.append(device)
+            
             if device:
-                self.devices.append(device)
                 device.type = device_type
                 device.rf_address = device_rf_address
                 device.room_id = room_id

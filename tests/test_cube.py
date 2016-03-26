@@ -121,7 +121,7 @@ class TestMaxCube(unittest.TestCase):
 
     def test_set_target_temperature(self):
         self.cube.set_target_temperature(self.cube.devices[0], 24.5)
-        self.assertEqual('s:AARAAAAABrxTAXE=\r\n', self.cube.connection.command)
+        self.assertEqual('s:AARAAAAABrxTATE=\r\n', self.cube.connection.command)
         self.assertEqual(24.5, self.cube.devices[0].target_temperature)
         self.cube.set_target_temperature(self.cube.devices[0], 24.6)
         self.assertEqual(24.5, self.cube.devices[0].target_temperature)
