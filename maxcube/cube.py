@@ -10,6 +10,7 @@ from maxcube.device import \
     MAX_DEVICE_MODE_MANUAL, \
     MAX_DEVICE_MODE_VACATION, \
     MAX_DEVICE_MODE_BOOST
+
 from maxcube.thermostat import MaxThermostat
 import logging
 
@@ -28,11 +29,14 @@ class MaxCube(MaxDevice):
 
     def init(self):
         self.update()
+        self.log()
+        
+    def log(self):
         logger.info('Cube (rf=%s, firmware=%s)' % (self.rf_address, self.firmware_version))
         for device in self.devices:
             if self.is_thermostat(device):
-                logger.info('Thermostat (rf=%s, name=%s, mode=%s, min=%s, max=%s, actual=%s, target=%s)'
-                            % (device.rf_address, device.name, device.mode, device.min_temperature,
+                logger.info('Thermostat (type=%s, rf=%s, room=%s, name=%s, mode=%s, min=%s, max=%s, actual=%s, target=%s)'
+                            % (device.type, device.rf_address, device.room_id, device.name, device.mode, device.min_temperature,
                                device.max_temperature, device.actual_temperature,
                                device.target_temperature))
             else:
@@ -88,9 +92,14 @@ class MaxCube(MaxDevice):
 
         pos = 3
         for _ in range(0, num_rooms):
+            room_id = struct.unpack('bb', data[pos:pos + 2])[0]
             name_length = struct.unpack('bb', data[pos:pos + 2])[1]
-            pos += 1 + 1 + name_length + 3
-
+            pos += 1 + 1
+            name = data[pos:pos + name_length].decode('utf-8')
+            pos += name_length
+            device_rf_address = ''.join("%X" % x for x in data[pos: pos + 3])
+            pos += 3
+        
         num_devices = data[pos]
         pos += 1
 
@@ -107,10 +116,8 @@ class MaxCube(MaxDevice):
                 if device_type == MAX_THERMOSTAT or device_type == MAX_THERMOSTAT_PLUS:
                     device = MaxThermostat()
 
-                if device:
-                    self.devices.append(device)
-
             if device:
+                self.devices.append(device)
                 device.type = device_type
                 device.rf_address = device_rf_address
                 device.room_id = room_id
@@ -127,12 +134,12 @@ class MaxCube(MaxDevice):
             length = data[pos]
             pos += 1
             device_rf_address = ''.join("%X" % x for x in data[pos: pos + 3])
-
+            
             device = self.device_by_rf(device_rf_address)
 
-            if device and self.is_thermostat(device) and len(data) > 6:
+            if device and self.is_thermostat(device):
                 device.rf_address = device_rf_address
-                bits1, bits2 = struct.unpack('BB', bytearray(data[5:7]))
+                bits1, bits2 = struct.unpack('BB', bytearray(data[pos + 4:pos + 6]))
                 device.mode = self.resolve_device_mode(bits2)
                 if device.mode == MAX_DEVICE_MODE_MANUAL or device.mode == MAX_DEVICE_MODE_AUTOMATIC:
                     actual_temperature = ((data[pos + 8] & 0xFF) * 256 + (data[pos + 9] & 0xFF)) / 10
@@ -151,12 +158,12 @@ class MaxCube(MaxDevice):
         room = str(thermostat.room_id)
         if thermostat.room_id < 10:
             room = '0' + room
-        target_temperature = int(temperature * 2)
-        target_temperature |= (1 << 6)
-        target_temperature &= ~ (1 << 7)
+        target_temperature = int(temperature * 2) + (thermostat.mode << 6)
 
         byte_cmd = '000440000000' + rf_address + room + hex(target_temperature)[2:]
+        logger.debug('Request: ' + byte_cmd)
         command = 's:' + base64.b64encode(bytearray.fromhex(byte_cmd)).decode('utf-8') + '\r\n'
+        logger.debug('Command: ' + command)
 
         self.connection.connect()
         self.connection.send(command)
@@ -166,14 +173,7 @@ class MaxCube(MaxDevice):
 
     @classmethod
     def resolve_device_mode(cls, bits):
-        if not bool(bits & 0x02) and not bool(bits & 0x01):
-            return MAX_DEVICE_MODE_AUTOMATIC
-        elif not bool(bits & 0x02) and bool(bits & 0x01):
-            return MAX_DEVICE_MODE_MANUAL
-        elif bool(bits & 0x02) and not bool(bits & 0x01):
-            return MAX_DEVICE_MODE_VACATION
-        else:
-            return MAX_DEVICE_MODE_BOOST
+        return (bits & 3)
 
     @classmethod
     def is_thermostat(cls, device):
