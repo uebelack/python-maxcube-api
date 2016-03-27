@@ -47,6 +47,9 @@ class MaxCube(MaxDevice):
         response = self.connection.response
         self.parse_response(response)
         self.connection.disconnect()
+    
+    def get_devices(self):
+        return self.devices
 
     def device_by_rf(self, rf):
         for device in self.devices:
