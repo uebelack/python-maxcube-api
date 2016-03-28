@@ -13,8 +13,11 @@ class MaxCubeConnection:
 
     def connect(self):
         logger.debug('Connecting to Max! Cube at ' + self.host + ':' + str(self.port))
-        if self.socket:
-            self.disconnect()
+        try:
+            if self.socket:
+                self.disconnect()
+        except:
+            logger.debug('Tried disconnecting from cube, caught Exception probably due to stale connection.')
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(2)
