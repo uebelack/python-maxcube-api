@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class MaxCube(MaxDevice):
     def __init__(self, connection):
-        super().__init__()
+        super(MaxCube, self).__init__()
         self.connection = connection
         self.name = 'Cube'
         self.type = MAX_CUBE
@@ -79,8 +79,8 @@ class MaxCube(MaxDevice):
         device = self.device_by_rf(device_rf_address)
 
         if device and self.is_thermostat(device):
-            device.min_temperature = data[21] / 2
-            device.max_temperature = data[20] / 2
+            device.min_temperature = data[21] / 2.0
+            device.max_temperature = data[20] / 2.0
 
     def parse_h_message(self, message):
         logger.debug('Parsing h_message: ' + message)
@@ -147,12 +147,12 @@ class MaxCube(MaxDevice):
                 bits1, bits2 = struct.unpack('BB', bytearray(data[pos + 4:pos + 6]))
                 device.mode = self.resolve_device_mode(bits2)
                 if device.mode == MAX_DEVICE_MODE_MANUAL or device.mode == MAX_DEVICE_MODE_AUTOMATIC:
-                    actual_temperature = ((data[pos + 8] & 0xFF) * 256 + (data[pos + 9] & 0xFF)) / 10
+                    actual_temperature = ((data[pos + 8] & 0xFF) * 256 + (data[pos + 9] & 0xFF)) / 10.0
                     if actual_temperature != 0:
                         device.actual_temperature = actual_temperature
                 else:
                     device.actual_temperature = None
-                device.target_temperature = (data[pos + 7] & 0x7F) / 2
+                device.target_temperature = (data[pos + 7] & 0x7F) / 2.0
             pos += length
 
     def set_target_temperature(self, thermostat, temperature):
@@ -174,7 +174,7 @@ class MaxCube(MaxDevice):
         self.connection.send(command)
         logger.debug('Response: ' + self.connection.response)
         self.connection.disconnect()
-        thermostat.target_temperature = int(temperature * 2)/2
+        thermostat.target_temperature = int(temperature * 2) / 2.0
 
     @classmethod
     def resolve_device_mode(cls, bits):

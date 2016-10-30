@@ -11,7 +11,7 @@ MAX_DEVICE_MODE_VACATION = 2
 MAX_DEVICE_MODE_BOOST = 3
 
 
-class MaxDevice:
+class MaxDevice(object):
     def __init__(self):
         self.type = None
         self.rf_address = None

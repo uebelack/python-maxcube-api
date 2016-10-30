@@ -3,7 +3,7 @@ from maxcube.device import MaxDevice
 
 class MaxThermostat(MaxDevice):
     def __init__(self):
-        super().__init__()
+        super(MaxThermostat, self).__init__()
         self.mode = None
         self.min_temperature = None
         self.max_temperature = None

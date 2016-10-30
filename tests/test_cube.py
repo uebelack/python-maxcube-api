@@ -33,7 +33,7 @@ INIT_RESPONSE = \
 
 class MaxCubeConnectionMock(MaxCubeConnection):
     def __init__(self):
-        super().__init__(None, None)
+        super(MaxCubeConnectionMock, self).__init__(None, None)
         self.command = None
 
     def connect(self):

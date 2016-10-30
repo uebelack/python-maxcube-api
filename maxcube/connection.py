@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class MaxCubeConnection:
+class MaxCubeConnection(object):
     def __init__(self, host, port):
         self.host = host
         self.port = port
