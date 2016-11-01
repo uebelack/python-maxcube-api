@@ -9,8 +9,8 @@ with open('LICENSE') as f:
     license = f.read()
 
 setup(
-    name='python-maxcube-api',
-    version='0.0.6',
+    name='maxcube-api',
+    version='0.0.1',
     description='eQ-3/ELV MAX! Cube Python API',
     long_description=readme,
     author='David Uebelacker',
