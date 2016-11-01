@@ -9,3 +9,6 @@ for device in cube.devices:
     print(device.target_temperature)
 
     cube.set_target_temperature(device, 18)
+
+
+class MaxcubeMQTT:

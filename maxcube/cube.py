@@ -58,7 +58,11 @@ class MaxCube(MaxDevice):
         return None
 
     def parse_response(self, response):
-        lines = unicode.split(unicode(response), '\n')
+        try:
+            lines = unicode.split(unicode(response), '\n')
+        except:
+            lines = str.split(response, '\n')
+
 
         for line in lines:
             line = line.strip()
