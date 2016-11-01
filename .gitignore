@@ -9,3 +9,4 @@ python_maxcube_api.egg-info
 dist
 *.pyc
 build
+maxcube_api.egg-info
