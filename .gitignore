@@ -6,3 +6,6 @@ tests/__pycache__
 .coverage
 setup.cpython-35-PYTEST.pyc
 python_maxcube_api.egg-info
+dist
+*.pyc
+build
