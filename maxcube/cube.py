@@ -29,7 +29,12 @@ class MaxCube(MaxDevice):
         self.connection = connection
         self.name = 'Cube'
         self.type = MAX_CUBE
+        self.serial = None
         self.firmware_version = None
+        self.duty_cycle = None
+        self.free_memory_slots = None
+        self.date = None
+        self.time = None
         self.devices = []
         self.rooms = []
         self.logger = logger
@@ -38,6 +43,17 @@ class MaxCube(MaxDevice):
     def init(self):
         self.update()
         self.log()
+
+    def todict(self):
+        d = {
+                "serial": self.serial,
+                "firmware_version": self.firmware_version,
+                "duty_cycle": self.duty_cycle,
+                "free_memory_slots": self.free_memory_slots,
+                "date": self.date,
+                "time": self.time
+        }
+        return d
         
     def log(self):
         logger.info('Cube (rf=%s, firmware=%s)' % (self.rf_address, self.firmware_version))
@@ -55,7 +71,7 @@ class MaxCube(MaxDevice):
 
     def command(self, command = None):
         self.connection.connect()
-        self.connection.send(command) if command
+        if command: self.connection.send(command)
         message = self.connection.response
         response = self.parse_response(message)
         self.connection.disconnect()
@@ -63,6 +79,10 @@ class MaxCube(MaxDevice):
     
     def get_devices(self):
         return self.devices
+
+    def refresh_devices(self):
+        self.command("l:\r\n")
+        return True
 
     def device_by_rf(self, rf):
         for device in self.devices:
@@ -77,7 +97,7 @@ class MaxCube(MaxDevice):
         return None
 
     def start_pairing(self, timeout = 60):
-        timeout_hex = "%X" & timeout
+        timeout_hex = "%X" % timeout
         if timout < 256:
             timeout_hex = '00' + timeout_hex
         command = 'n:'+timeout_hex+'\r\n'
@@ -86,6 +106,11 @@ class MaxCube(MaxDevice):
     def ntp_servers(self, ntp = []):
         ntp_servers = ','.join(ntp)
         command = 'f:'+ntp_servers+'\r\n'
+        return self.command(command)
+
+    def wakeup(self, time = 30):
+        wakeup_time = "%X" % time
+        command = 'z:'+wakeup_time+'A\r\n'
         return self.command(command)
 
     def parse_response(self, response):
@@ -129,15 +154,27 @@ class MaxCube(MaxDevice):
     def parse_h_message(self, message):
         logger.debug('Parsing h_message: ' + message)
         tokens = message[2:].split(',')
+        self.serial = tokens[0]
         self.rf_address = tokens[1]
         self.firmware_version = (tokens[2][0:2]) + '.' + (tokens[2][2:4])
+        self.duty_cycle = int(tokens[5], 16)
+        self.free_memory_slots = int(tokens[6], 16)
+        year = int(tokens[7][0:2], 16) + 2000;
+        month = int(tokens[7][2:4], 16)
+        day = int(tokens[7][4:6], 16)
+        self.date = '%d-%d-%d' % (year, month, day)
+        hour = int(tokens[8][0:2], 16)
+        minute = int(tokens[8][2:4], 16)
+        self.time = '%d:%d' % (hour, minute)
 
     def parse_s_message(self, message):
         tokens = message[2:].split(',')
         response = MaxResponseS()
         response.duty_cycle = int(tokens[0], 16)
+        self.duty_cyle = response.duty_cycle
         response.result = tokens[1] == '0'
         response.free_memory_slots = int(tokens[2].strip(), 16)
+        self.free_memory_slots = response.free_memory_slots
         return response
 
     def parse_m_message(self, message):
@@ -207,9 +244,9 @@ class MaxCube(MaxDevice):
                 bits1, bits2 = struct.unpack('BB', bytearray(data[pos + 4:pos + 6]))
                 device.mode = self.resolve_device_mode(bits2)
                 device.mode_name = MAX_DEVICE_MODES[self.resolve_device_mode(bits2)]
+                device.valve_position = data[pos + 6] & 0xFF
                 if device.mode == MAX_DEVICE_MODE_MANUAL or device.mode == MAX_DEVICE_MODE_AUTOMATIC:
                     actual_temperature = ((data[pos + 8] & 0xFF) * 256 + (data[pos + 9] & 0xFF)) / 10.0
-                    print(actual_temperature)
                     if actual_temperature != 0:
                         device.actual_temperature = actual_temperature
                 else:
