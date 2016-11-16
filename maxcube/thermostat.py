@@ -11,6 +11,7 @@ class MaxThermostat(MaxDevice):
         self.max_temperature = None
         self.actual_temperature = None
         self.target_temperature = None
+        self.valve_position = None
 
     def todict(self):
         d = super(MaxThermostat, self).todict()
@@ -19,7 +20,8 @@ class MaxThermostat(MaxDevice):
                 "min_temperature": self.min_temperature,
                 "max_temperature": self.max_temperature,
                 "actual_temperature": self.actual_temperature,
-                "target_temperature": self.target_temperature
+                "target_temperature": self.target_temperature,
+                "valve_position": self.valve_position
                 }
         return { **d, **h }
 
