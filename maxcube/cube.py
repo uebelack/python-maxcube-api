@@ -6,12 +6,18 @@ from maxcube.device import \
     MAX_CUBE, \
     MAX_THERMOSTAT, \
     MAX_THERMOSTAT_PLUS, \
+    MAX_DEVICES, \
     MAX_DEVICE_MODE_AUTOMATIC, \
     MAX_DEVICE_MODE_MANUAL, \
     MAX_DEVICE_MODE_VACATION, \
-    MAX_DEVICE_MODE_BOOST
+    MAX_DEVICE_MODE_BOOST, \
+    MAX_DEVICE_MODES
 
 from maxcube.thermostat import MaxThermostat
+from maxcube.response_s import MaxResponseS
+from maxcube.response_n import MaxResponseN
+from maxcube.response_f import MaxResponseF
+from maxcube.room import MaxRoom
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,6 +31,8 @@ class MaxCube(MaxDevice):
         self.type = MAX_CUBE
         self.firmware_version = None
         self.devices = []
+        self.rooms = []
+        self.logger = logger
         self.init()
 
     def init(self):
@@ -43,10 +51,15 @@ class MaxCube(MaxDevice):
                 logger.info('Device (rf=%s, name=%s' % (device.rf_address, device.name))
 
     def update(self):
+        self.command()
+
+    def command(self, command = None):
         self.connection.connect()
-        response = self.connection.response
-        self.parse_response(response)
+        self.connection.send(command) if command
+        message = self.connection.response
+        response = self.parse_response(message)
         self.connection.disconnect()
+        return response
     
     def get_devices(self):
         return self.devices
@@ -57,17 +70,37 @@ class MaxCube(MaxDevice):
                 return device
         return None
 
+    def room_by_id(self, id):
+        for room in self.rooms:
+            if room.id == id:
+                return room
+        return None
+
+    def start_pairing(self, timeout = 60):
+        timeout_hex = "%X" & timeout
+        if timout < 256:
+            timeout_hex = '00' + timeout_hex
+        command = 'n:'+timeout_hex+'\r\n'
+        return self.command(command)
+
+    def ntp_servers(self, ntp = []):
+        ntp_servers = ','.join(ntp)
+        command = 'f:'+ntp_servers+'\r\n'
+        return self.command(command)
+
     def parse_response(self, response):
         try:
-            lines = unicode.split(unicode(response), '\n')
+            lines = str.split(str(response), '\n')
         except:
             lines = str.split(response, '\n')
 
 
         for line in lines:
             line = line.strip()
-            if line and len(line) > 10:
-                if line[:1] == 'C':
+            if line and len(line) > 1:
+                if line[:1] == 'A':
+                    return self.parse_a_message(line.strip())  
+                elif line[:1] == 'C':
                     self.parse_c_message(line.strip())
                 elif line[:1] == 'H':
                     self.parse_h_message(line.strip())
@@ -75,6 +108,13 @@ class MaxCube(MaxDevice):
                     self.parse_l_message(line.strip())
                 elif line[:1] == 'M':
                     self.parse_m_message(line.strip())
+                elif line[:1] == 'N':
+                    return self.parse_n_message(line.strip())
+                elif line[:1] == 'F':
+                    return self.parse_f_message(line.strip())
+
+    def parse_a_message(self, message):
+        return True
 
     def parse_c_message(self, message):
         logger.debug('Parsing c_message: ' + message)
@@ -92,6 +132,14 @@ class MaxCube(MaxDevice):
         self.rf_address = tokens[1]
         self.firmware_version = (tokens[2][0:2]) + '.' + (tokens[2][2:4])
 
+    def parse_s_message(self, message):
+        tokens = message[2:].split(',')
+        response = MaxResponseS()
+        response.duty_cycle = int(tokens[0], 16)
+        response.result = tokens[1] == '0'
+        response.free_memory_slots = int(tokens[2].strip(), 16)
+        return response
+
     def parse_m_message(self, message):
         logger.debug('Parsing m_message: ' + message)
         data = bytearray(base64.b64decode(message[2:].split(',')[2]))
@@ -106,6 +154,12 @@ class MaxCube(MaxDevice):
             pos += name_length
             device_rf_address = ''.join("%X" % x for x in data[pos: pos + 3])
             pos += 3
+
+            room = MaxRoom()
+            room.id = room_id
+            room.name = name
+            room.rf_address = device_rf_address
+            self.rooms.append(room)
         
         num_devices = data[pos]
         pos += 1
@@ -127,7 +181,9 @@ class MaxCube(MaxDevice):
                     self.devices.append(device)
             
             if device:
+                device.cube = self
                 device.type = device_type
+                device.type_name = MAX_DEVICES[device_type]
                 device.rf_address = device_rf_address
                 device.room_id = room_id
                 device.name = device_name
@@ -150,8 +206,10 @@ class MaxCube(MaxDevice):
                 device.rf_address = device_rf_address
                 bits1, bits2 = struct.unpack('BB', bytearray(data[pos + 4:pos + 6]))
                 device.mode = self.resolve_device_mode(bits2)
+                device.mode_name = MAX_DEVICE_MODES[self.resolve_device_mode(bits2)]
                 if device.mode == MAX_DEVICE_MODE_MANUAL or device.mode == MAX_DEVICE_MODE_AUTOMATIC:
                     actual_temperature = ((data[pos + 8] & 0xFF) * 256 + (data[pos + 9] & 0xFF)) / 10.0
+                    print(actual_temperature)
                     if actual_temperature != 0:
                         device.actual_temperature = actual_temperature
                 else:
@@ -159,26 +217,22 @@ class MaxCube(MaxDevice):
                 device.target_temperature = (data[pos + 7] & 0x7F) / 2.0
             pos += length
 
-    def set_target_temperature(self, thermostat, temperature):
-        logger.debug('Setting temperature for %s to %s!' %(thermostat.rf_address, temperature))
-        rf_address = thermostat.rf_address
-        if len(rf_address) < 6:
-            rf_address = '0' + rf_address
-        room = str(thermostat.room_id)
-        if thermostat.room_id < 10:
-            room = '0' + room
-        target_temperature = int(temperature * 2) + (thermostat.mode << 6)
+    def parse_n_message(self, message):
+        data = bytearray(base64.b64decode(message[2:]))
+        pos = 0
+        response = MaxResponseN()
+        response.device_type = int(data[pos])
+        pos += 1
+        response.rf_address = ''.join("%X" % x for x in data[pos: pos + 3])
+        pos += 3
+        response.serial = data[pos:pos + 10]
+        return response
 
-        byte_cmd = '000440000000' + rf_address + room + hex(target_temperature)[2:]
-        logger.debug('Request: ' + byte_cmd)
-        command = 's:' + base64.b64encode(bytearray.fromhex(byte_cmd)).decode('utf-8') + '\r\n'
-        logger.debug('Command: ' + command)
-
-        self.connection.connect()
-        self.connection.send(command)
-        logger.debug('Response: ' + self.connection.response)
-        self.connection.disconnect()
-        thermostat.target_temperature = int(temperature * 2) / 2.0
+    def parse_f_message(self, message):
+        tokens = message[2:].split(',')
+        response = MaxResponseF()
+        response.ntp_servers = tokens
+        return response
 
     @classmethod
     def resolve_device_mode(cls, bits):
