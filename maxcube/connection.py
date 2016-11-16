@@ -47,3 +47,12 @@ class MaxCubeConnection(object):
             self.send('q:\r\n')
             self.socket.close()
         self.socket = None
+
+    def todict(self):
+        data = {}
+        for key, value in self.__dict__.items():
+            try:
+                data[key] = value.todict()
+            except AttributeError:
+                data[key] = value
+        return data
