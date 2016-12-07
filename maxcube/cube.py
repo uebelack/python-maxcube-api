@@ -104,7 +104,7 @@ class MaxCube(MaxDevice):
             pos += 1 + 1
             name = data[pos:pos + name_length].decode('utf-8')
             pos += name_length
-            device_rf_address = ''.join('{:02X}'.format(x) for x in data[pos: pos + 3])
+            device_rf_address = self.parse_rf_address(data[pos: pos + 3])
             pos += 3
         
         num_devices = data[pos]
@@ -112,7 +112,7 @@ class MaxCube(MaxDevice):
 
         for device_idx in range(0, num_devices):
             device_type = data[pos]
-            device_rf_address = ''.join('{:02X}'.format(x) for x in data[pos + 1: pos + 1 + 3])
+            device_rf_address = self.parse_rf_address(data[pos + 1: pos + 1 + 3])
             device_name_length = data[pos + 14]
             device_name = data[pos + 15:pos + 15 + device_name_length].decode('utf-8')
             room_id = data[pos + 15 + device_name_length]
@@ -142,7 +142,7 @@ class MaxCube(MaxDevice):
         while pos < len(data):
             length = data[pos]
             pos += 1
-            device_rf_address = ''.join('{:02X}'.format(x)  for x in data[pos: pos + 3])
+            device_rf_address = self.parse_rf_address(data[pos: pos + 3])
             
             device = self.device_by_rf(device_rf_address)
 
@@ -185,3 +185,7 @@ class MaxCube(MaxDevice):
     @classmethod
     def is_thermostat(cls, device):
         return device.type == MAX_THERMOSTAT or device.type == MAX_THERMOSTAT_PLUS
+
+    @classmethod
+    def parse_rf_address(cls, address):
+        return ''.join('{:02X}'.format(x)  for x in address)
