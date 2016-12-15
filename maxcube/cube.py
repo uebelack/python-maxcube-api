@@ -78,7 +78,7 @@ class MaxCube(MaxDevice):
 
     def parse_c_message(self, message):
         logger.debug('Parsing c_message: ' + message)
-        device_rf_address = message[2:].split(',')[0][1:].upper()
+        device_rf_address = message[1:].split(',')[0][1:].upper()
         data = bytearray(base64.b64decode(message[2:].split(',')[1]))
         device = self.device_by_rf(device_rf_address)
 
