@@ -78,7 +78,7 @@ class MaxCube(MaxDevice):
 
     def parse_c_message(self, message):
         logger.debug('Parsing c_message: ' + message)
-        device_rf_address = message[2:].split(',')[0][1:].upper()
+        device_rf_address = message[1:].split(',')[0][1:].upper()
         data = bytearray(base64.b64decode(message[2:].split(',')[1]))
         device = self.device_by_rf(device_rf_address)
 
@@ -104,7 +104,7 @@ class MaxCube(MaxDevice):
             pos += 1 + 1
             name = data[pos:pos + name_length].decode('utf-8')
             pos += name_length
-            device_rf_address = ''.join("%X" % x for x in data[pos: pos + 3])
+            device_rf_address = self.parse_rf_address(data[pos: pos + 3])
             pos += 3
         
         num_devices = data[pos]
@@ -112,7 +112,7 @@ class MaxCube(MaxDevice):
 
         for device_idx in range(0, num_devices):
             device_type = data[pos]
-            device_rf_address = ''.join("%X" % x for x in data[pos + 1: pos + 1 + 3])
+            device_rf_address = self.parse_rf_address(data[pos + 1: pos + 1 + 3])
             device_name_length = data[pos + 14]
             device_name = data[pos + 15:pos + 15 + device_name_length].decode('utf-8')
             room_id = data[pos + 15 + device_name_length]
@@ -142,7 +142,7 @@ class MaxCube(MaxDevice):
         while pos < len(data):
             length = data[pos]
             pos += 1
-            device_rf_address = ''.join("%X" % x for x in data[pos: pos + 3])
+            device_rf_address = self.parse_rf_address(data[pos: pos + 3])
             
             device = self.device_by_rf(device_rf_address)
 
@@ -162,8 +162,6 @@ class MaxCube(MaxDevice):
     def set_target_temperature(self, thermostat, temperature):
         logger.debug('Setting temperature for %s to %s!' %(thermostat.rf_address, temperature))
         rf_address = thermostat.rf_address
-        if len(rf_address) < 6:
-            rf_address = '0' + rf_address
         room = str(thermostat.room_id)
         if thermostat.room_id < 10:
             room = '0' + room
@@ -187,3 +185,7 @@ class MaxCube(MaxDevice):
     @classmethod
     def is_thermostat(cls, device):
         return device.type == MAX_THERMOSTAT or device.type == MAX_THERMOSTAT_PLUS
+
+    @classmethod
+    def parse_rf_address(cls, address):
+        return ''.join('{:02X}'.format(x)  for x in address)
