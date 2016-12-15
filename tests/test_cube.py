@@ -85,13 +85,13 @@ class TestMaxCube(unittest.TestCase):
         self.cube.parse_m_message('M:00,01,VgIEAQdLaXRjaGVuBrxTAgZMaXZpbmcGvFoDCFNsZWVwaW5nCKuCBARXb3JrBrxcBAEGvF'
                                   'NLRVEwMzM2MTA4B0tpdGNoZW4BAQa8WktFUTAzMzYxMDAGTGl2aW5nAgEIq4JLRVEwMzM1NjYyCFNs'
                                   'ZWVwaW5nAwEGvFxLRVEwMzM2MTA0BFdvcmsEAQ==')
-        self.assertEqual('6BC53', self.cube.devices[0].rf_address)
+        self.assertEqual('06BC53', self.cube.devices[0].rf_address)
         self.assertEqual('Kitchen', self.cube.devices[0].name)
-        self.assertEqual('6BC5A', self.cube.devices[1].rf_address)
+        self.assertEqual('06BC5A', self.cube.devices[1].rf_address)
         self.assertEqual('Living', self.cube.devices[1].name)
-        self.assertEqual('8AB82', self.cube.devices[2].rf_address)
+        self.assertEqual('08AB82', self.cube.devices[2].rf_address)
         self.assertEqual('Sleeping', self.cube.devices[2].name)
-        self.assertEqual('6BC5C', self.cube.devices[3].rf_address)
+        self.assertEqual('06BC5C', self.cube.devices[3].rf_address)
         self.assertEqual('Work', self.cube.devices[3].name)
 
     def test_parse_l_message(self):
