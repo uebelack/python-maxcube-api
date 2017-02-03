@@ -12,7 +12,8 @@ from maxcube.device import \
     MAX_DEVICE_MODE_MANUAL, \
     MAX_DEVICE_MODE_VACATION, \
     MAX_DEVICE_MODE_BOOST
-
+from maxcube.room import \
+    MaxRoom
 from maxcube.thermostat import MaxThermostat
 from maxcube.wallthermostat import MaxWallThermostat
 from maxcube.windowshutter import MaxWindowShutter
@@ -29,6 +30,7 @@ class MaxCube(MaxDevice):
         self.type = MAX_CUBE
         self.firmware_version = None
         self.devices = []
+        self.rooms = []
         self.init()
 
     def init(self):
@@ -40,9 +42,18 @@ class MaxCube(MaxDevice):
         for device in self.devices:
             if self.is_thermostat(device):
                 logger.info('Thermostat (type=%s, rf=%s, room=%s, name=%s, mode=%s, min=%s, max=%s, actual=%s, target=%s)'
-                            % (device.type, device.rf_address, device.room_id, device.name, device.mode, device.min_temperature,
-                               device.max_temperature, device.actual_temperature,
-                               device.target_temperature))
+                            % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name, 
+                               device.mode, device.min_temperature, device.max_temperature, 
+                               device.actual_temperature, device.target_temperature))
+            elif self.is_wallthermostat(device):
+                logger.info('WallThermostat (type=%s, rf=%s, room=%s, name=%s, min=%s, max=%s, actual=%s, target=%s)'
+                            % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name, 
+                               device.min_temperature, device.max_temperature, 
+                               device.actual_temperature, device.target_temperature))
+            elif self.is_windowshutter(device):
+                logger.info('WindowShutter (type=%s, rf=%s, room=%s, name=%s, init=%s, open=%s)'
+                            % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name, 
+                               device.initialized, device.is_open))
             else:
                 logger.info('Device (rf=%s, name=%s' % (device.rf_address, device.name))
 
@@ -59,6 +70,24 @@ class MaxCube(MaxDevice):
         for device in self.devices:
             if device.rf_address == rf:
                 return device
+        return None
+
+    def devices_by_room(self, room):
+        rooms = []
+
+        for device in self.devices:
+            if device.room_id == room.id:
+                rooms.append(device)
+
+        return rooms
+
+    def get_rooms(self):
+        return self.rooms
+
+    def room_by_id(self, id):
+        for room in self.rooms:
+            if room.id == id:
+                return room
         return None
 
     def parse_response(self, response):
@@ -129,7 +158,12 @@ class MaxCube(MaxDevice):
             pos += name_length
             device_rf_address = self.parse_rf_address(data[pos: pos + 3])
             pos += 3
-        
+       
+            room = MaxRoom()
+            room.id = room_id
+            room.name = name
+            self.rooms.append(room)
+ 
         num_devices = data[pos]
         pos += 1
 
