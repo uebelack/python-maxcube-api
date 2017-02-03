@@ -10,5 +10,3 @@ for device in cube.devices:
 
     cube.set_target_temperature(device, 18)
 
-
-class MaxcubeMQTT:
