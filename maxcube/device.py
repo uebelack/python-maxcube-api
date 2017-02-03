@@ -17,3 +17,4 @@ class MaxDevice(object):
         self.rf_address = None
         self.room_id = None
         self.name = None
+        self.serial = None
