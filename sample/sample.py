@@ -65,8 +65,18 @@ for device in cube.devices:
 
 for device in cube.devices:
     print(device)
-    if cube.is_thermostat(device):
+    if cube.is_wallthermostat(device) or cube.is_thermostat(device):
         print("Setting temp")
         cube.set_target_temperature(device, 8)
     else:
-        print("No Thermostate")
+        print("No Thermostat")
+
+print("")
+
+for device in cube.devices:
+    print(device)
+    if cube.is_wallthermostat(device):
+        print("Setting mode")
+        cube.set_mode(device, MAX_DEVICE_MODE_MANUAL)
+    else:
+        print("No Wall Thermostat") 
