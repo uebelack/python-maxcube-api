@@ -9,11 +9,8 @@ from maxcube.device import \
     MAX_WINDOW_SHUTTER, \
     MAX_WALL_THERMOSTAT, \
     MAX_DEVICE_MODE_AUTOMATIC, \
-    MAX_DEVICE_MODE_MANUAL, \
-    MAX_DEVICE_MODE_VACATION, \
-    MAX_DEVICE_MODE_BOOST
-from maxcube.room import \
-    MaxRoom
+    MAX_DEVICE_MODE_MANUAL
+from maxcube.room import MaxRoom
 from maxcube.thermostat import MaxThermostat
 from maxcube.wallthermostat import MaxWallThermostat
 from maxcube.windowshutter import MaxWindowShutter
@@ -36,23 +33,23 @@ class MaxCube(MaxDevice):
     def init(self):
         self.update()
         self.log()
-        
+
     def log(self):
         logger.info('Cube (rf=%s, firmware=%s)' % (self.rf_address, self.firmware_version))
         for device in self.devices:
             if self.is_thermostat(device):
                 logger.info('Thermostat (type=%s, rf=%s, room=%s, name=%s, mode=%s, min=%s, max=%s, actual=%s, target=%s)'
-                            % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name, 
-                               device.mode, device.min_temperature, device.max_temperature, 
+                            % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name,
+                               device.mode, device.min_temperature, device.max_temperature,
                                device.actual_temperature, device.target_temperature))
             elif self.is_wallthermostat(device):
                 logger.info('WallThermostat (type=%s, rf=%s, room=%s, name=%s, min=%s, max=%s, actual=%s, target=%s)'
-                            % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name, 
-                               device.min_temperature, device.max_temperature, 
+                            % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name,
+                               device.min_temperature, device.max_temperature,
                                device.actual_temperature, device.target_temperature))
             elif self.is_windowshutter(device):
                 logger.info('WindowShutter (type=%s, rf=%s, room=%s, name=%s, init=%s, open=%s)'
-                            % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name, 
+                            % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name,
                                device.initialized, device.is_open))
             else:
                 logger.info('Device (rf=%s, name=%s' % (device.rf_address, device.name))
@@ -62,7 +59,7 @@ class MaxCube(MaxDevice):
         response = self.connection.response
         self.parse_response(response)
         self.connection.disconnect()
-    
+
     def get_devices(self):
         return self.devices
 
@@ -96,7 +93,6 @@ class MaxCube(MaxDevice):
         except:
             lines = str.split(response, '\n')
 
-
         for line in lines:
             line = line.strip()
             if line and len(line) > 10:
@@ -115,11 +111,11 @@ class MaxCube(MaxDevice):
         data = bytearray(base64.b64decode(message[2:].split(',')[1]))
 
         length = data[0]
-        rf_address = self.parse_rf_address(data[1 : 3])
+        rf_address = self.parse_rf_address(data[1: 3])
         device_type = data[4]
 
         device = self.device_by_rf(device_rf_address)
-        
+
         if device and self.is_thermostat(device):
             device.comfort_temperature = data[18] / 2.0
             device.eco_temperature = data[19] / 2.0
@@ -158,21 +154,21 @@ class MaxCube(MaxDevice):
             pos += name_length
             device_rf_address = self.parse_rf_address(data[pos: pos + 3])
             pos += 3
-       
+
             room = MaxRoom()
             room.id = room_id
             room.name = name
             self.rooms.append(room)
- 
+
         num_devices = data[pos]
         pos += 1
 
         for device_idx in range(0, num_devices):
             device_type = data[pos]
             device_rf_address = self.parse_rf_address(data[pos + 1: pos + 1 + 3])
-            device_serial = data[pos + 4 : pos + 14].decode('utf-8')
+            device_serial = data[pos + 4: pos + 14].decode('utf-8')
             device_name_length = data[pos + 14]
-            device_name = data[pos + 15:pos + 15 + device_name_length].decode('utf-8')
+            device_name = data[pos + 15: pos + 15 + device_name_length].decode('utf-8')
             room_id = data[pos + 15 + device_name_length]
 
             device = self.device_by_rf(device_rf_address)
@@ -189,7 +185,7 @@ class MaxCube(MaxDevice):
 
                 if device:
                     self.devices.append(device)
-            
+
             if device:
                 device.type = device_type
                 device.rf_address = device_rf_address
@@ -206,15 +202,15 @@ class MaxCube(MaxDevice):
 
         while pos < len(data):
             length = data[pos]
-            device_rf_address = self.parse_rf_address(data[pos + 1 : pos + 4])
-            flags = data[pos + 5 : pos + 6]
- 
+            device_rf_address = self.parse_rf_address(data[pos + 1: pos + 4])
+            flags = data[pos + 5: pos + 6]
+
             device = self.device_by_rf(device_rf_address)
 
             # Thermostat or Wall Thermostat
             if device and (self.is_thermostat(device) or self.is_wallthermostat(device)):
                 device.target_temperature = (data[pos + 8] & 0x7F) / 2.0
-                bits1, bits2 = struct.unpack('BB', bytearray(data[pos + 5 : pos + 7]))
+                bits1, bits2 = struct.unpack('BB', bytearray(data[pos + 5: pos + 7]))
                 device.mode = self.resolve_device_mode(bits2)
 
             # Thermostat
@@ -299,4 +295,4 @@ class MaxCube(MaxDevice):
 
     @classmethod
     def parse_rf_address(cls, address):
-        return ''.join('{:02X}'.format(x)  for x in address)
+        return ''.join('{:02X}'.format(x) for x in address)
