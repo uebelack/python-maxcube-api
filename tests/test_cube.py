@@ -9,7 +9,8 @@ from maxcube.device import \
     MAX_WALL_THERMOSTAT, \
     MAX_WINDOW_SHUTTER, \
     MAX_DEVICE_MODE_AUTOMATIC, \
-    MAX_DEVICE_MODE_MANUAL
+    MAX_DEVICE_MODE_MANUAL, \
+    MAX_DEVICE_MODE_BOOST
 from maxcube.room import MaxRoom
 
 INIT_RESPONSE_1 = \
@@ -274,11 +275,22 @@ class TestMaxCubeExtended(unittest.TestCase):
         self.cube.set_target_temperature(self.cube.devices[0], 24.5)
         self.assertEqual('s:AARAAAAADi66ATE=\r\n', self.cube.connection.command)
         self.assertEqual(24.5, self.cube.devices[0].target_temperature)
-        self.cube.set_target_temperature(self.cube.devices[0], 24.6)
-        self.assertEqual(24.5, self.cube.devices[0].target_temperature)
 
-    def test_set_target_temperature_other(self):
+    def test_set_target_temperature_windowshutter(self):
         self.cube.set_target_temperature(self.cube.devices[2], 24.5)
+        self.assertEqual(None, self.cube.connection.command)
+
+    def test_set_mode_thermostat(self):
+        self.cube.set_mode(self.cube.devices[0], MAX_DEVICE_MODE_MANUAL)
+        self.assertEqual('s:AARAAAAADi66AVA=\r\n', self.cube.connection.command)
+        self.assertEqual(MAX_DEVICE_MODE_MANUAL, self.cube.devices[0].mode)
+
+    def test_set_mode_windowshutter(self):
+        self.cube.set_mode(self.cube.devices[2], 24.5)
+        self.assertEqual(None, self.cube.connection.command)
+
+    def test_set_temperature_mode_thermostat(self):
+        self.cube.set_temperature_mode(self.cube.devices[2], 24.5, MAX_DEVICE_MODE_BOOST)
         self.assertEqual(None, self.cube.connection.command)
 
     def test_get_devices(self):

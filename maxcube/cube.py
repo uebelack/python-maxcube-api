@@ -243,16 +243,31 @@ class MaxCube(MaxDevice):
             pos += length + 1
 
     def set_target_temperature(self, thermostat, temperature):
-        logger.debug('Setting temperature for %s to %s!' %(thermostat.rf_address, temperature))
-        if not self.is_thermostat(thermostat):
-            logger.error('set_target_temperature can only be used on Thermostats')
+        if not self.is_thermostat(thermostat) and not self.is_wallthermostat(thermostat):
+            logger.error('%s is no (wall-)thermostat!', thermostat.rf_address)
+            return
+
+        self.set_temperature_mode(thermostat, temperature, thermostat.mode)
+
+    def set_mode(self, thermostat, mode):
+        if not self.is_thermostat(thermostat) and not self.is_wallthermostat(thermostat):
+            logger.error('%s is no (wall-)thermostat!', thermostat.rf_address)
+            return
+
+        self.set_temperature_mode(thermostat, thermostat.target_temperature, mode)
+
+    def set_temperature_mode(self, thermostat, temperature, mode):
+        logger.debug('Setting temperature %s and mode %s on %s!', temperature, mode, thermostat.rf_address)
+
+        if not self.is_thermostat(thermostat) and not self.is_wallthermostat(thermostat):
+            logger.error('%s is no (wall-)thermostat!', thermostat.rf_address)
             return
 
         rf_address = thermostat.rf_address
         room = str(thermostat.room_id)
         if thermostat.room_id < 10:
             room = '0' + room
-        target_temperature = int(temperature * 2) + (thermostat.mode << 6)
+        target_temperature = int(temperature * 2) + (mode << 6)
 
         byte_cmd = '000440000000' + rf_address + room + hex(target_temperature)[2:]
         logger.debug('Request: ' + byte_cmd)
@@ -264,6 +279,7 @@ class MaxCube(MaxDevice):
         logger.debug('Response: ' + self.connection.response)
         self.connection.disconnect()
         thermostat.target_temperature = int(temperature * 2) / 2.0
+        thermostat.mode = mode
 
     @classmethod
     def resolve_device_mode(cls, bits):
