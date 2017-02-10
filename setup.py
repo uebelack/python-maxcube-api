@@ -10,7 +10,7 @@ with open('LICENSE') as f:
 
 setup(
     name='maxcube-api',
-    version='0.0.3',
+    version='0.1.0',
     description='eQ-3/ELV MAX! Cube Python API',
     long_description=readme,
     author='David Uebelacker',
