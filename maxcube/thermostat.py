@@ -1,5 +1,7 @@
 import base64
-from maxcube.device import MaxDevice
+from maxcube.device import \
+    MaxDevice, \
+    MAX_DEVICE_MODES
 
 
 class MaxThermostat(MaxDevice):
