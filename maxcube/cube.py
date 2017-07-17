@@ -225,7 +225,7 @@ class MaxCube(MaxDevice):
 
             # Wall Thermostat
             if device and self.is_wallthermostat(device):
-                device.actual_temperature = data[pos + 12] / 10.0
+                device.actual_temperature = (((data[pos + 8] & 0x80) << 1) + data[pos + 12]) / 10.0
 
             # Window Shutter
             if device and self.is_windowshutter(device):
