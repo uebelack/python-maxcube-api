@@ -38,10 +38,10 @@ class MaxCube(MaxDevice):
         logger.info('Cube (rf=%s, firmware=%s)' % (self.rf_address, self.firmware_version))
         for device in self.devices:
             if self.is_thermostat(device):
-                logger.info('Thermostat (type=%s, rf=%s, room=%s, name=%s, mode=%s, min=%s, max=%s, actual=%s, target=%s)'
+                logger.info('Thermostat (type=%s, rf=%s, room=%s, name=%s, mode=%s, min=%s, max=%s, actual=%s, target=%s, valve=%s)'
                             % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name,
                                device.mode, device.min_temperature, device.max_temperature,
-                               device.actual_temperature, device.target_temperature))
+                               device.actual_temperature, device.target_temperature, device.valve_position))
             elif self.is_wallthermostat(device):
                 logger.info('WallThermostat (type=%s, rf=%s, room=%s, name=%s, min=%s, max=%s, actual=%s, target=%s)'
                             % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name,
