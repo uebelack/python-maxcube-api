@@ -9,7 +9,9 @@ from maxcube.device import \
     MAX_WINDOW_SHUTTER, \
     MAX_WALL_THERMOSTAT, \
     MAX_DEVICE_MODE_AUTOMATIC, \
-    MAX_DEVICE_MODE_MANUAL
+    MAX_DEVICE_MODE_MANUAL, \
+    MAX_DEVICE_BATTERY_OK, \
+    MAX_DEVICE_BATTERY_LOW
 from maxcube.room import MaxRoom
 from maxcube.thermostat import MaxThermostat
 from maxcube.wallthermostat import MaxWallThermostat
@@ -207,6 +209,10 @@ class MaxCube(MaxDevice):
 
             device = self.device_by_rf(device_rf_address)
 
+            if device:
+                bits1, bits2 = struct.unpack('BB', bytearray(data[pos + 5: pos + 7]))
+                device.battery = self.resolve_device_battery(bits2)
+
             # Thermostat or Wall Thermostat
             if device and (self.is_thermostat(device) or self.is_wallthermostat(device)):
                 device.target_temperature = (data[pos + 8] & 0x7F) / 2.0
@@ -280,6 +286,10 @@ class MaxCube(MaxDevice):
     @classmethod
     def resolve_device_mode(cls, bits):
         return (bits & 3)
+
+    @classmethod
+    def resolve_device_battery(cls, bits):
+        return (bits >> 7)
 
     @classmethod
     def is_thermostat(cls, device):

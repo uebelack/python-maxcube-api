@@ -10,6 +10,8 @@ MAX_DEVICE_MODE_MANUAL = 1
 MAX_DEVICE_MODE_VACATION = 2
 MAX_DEVICE_MODE_BOOST = 3
 
+MAX_DEVICE_BATTERY_OK = 0
+MAX_DEVICE_BATTERY_LOW = 1
 
 class MaxDevice(object):
     def __init__(self):
@@ -18,3 +20,4 @@ class MaxDevice(object):
         self.room_id = None
         self.name = None
         self.serial = None
+        self.battery = None
