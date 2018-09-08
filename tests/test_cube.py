@@ -49,7 +49,7 @@ INIT_RESPONSE_2 = \
     'C:0e2eba,0g4uugEBEKBLRVExMDg2NDM3KyE9CQcYAzAM/wAgYFR4ISAhICEgISAhIEUgRSBFIEUgRSBFICBgVHghICEgISAhICEgRSBFIEUgR' \
     'SBFIEUgIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFICBCVE4hHyEgISAhICEgRSBFIEUgRSBFIEU' \
     'gIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFIA==\n\r' \
-    'L:DAoIgewSGAQQAAAA5QYMorL3EhALDi66ChIYABAAAAA=\n\r' 
+    'L:DAoIgewSGAQQAAAA5QYMorL3EhALDi66ChIYABAAAAA=\n\r'
 
 class MaxCubeConnectionMock(MaxCubeConnection):
     def __init__(self, init_response):
@@ -224,7 +224,7 @@ class TestMaxCubeExtended(unittest.TestCase):
         self.assertEqual(MAX_DEVICE_MODE_AUTOMATIC, device.mode)
         self.assertEqual(22.9, device.actual_temperature)
         self.assertEqual(8.0, device.target_temperature)
-        
+
         device = self.cube.devices[2]
         self.assertEqual(False, device.is_open)
 
@@ -325,7 +325,7 @@ class TestMaxCubeExtended(unittest.TestCase):
 
     def test_get_rooms(self):
         rooms = self.cube.get_rooms()
-    
+
         self.assertEqual('Badezimmer', rooms[0].name)
         self.assertEqual(1, rooms[0].id)
 
@@ -334,7 +334,7 @@ class TestMaxCubeExtended(unittest.TestCase):
 
     def test_room_by_id(self):
         room = self.cube.room_by_id(1)
-        
+
         self.assertEqual('Badezimmer', room.name)
         self.assertEqual(1, room.id)
 
