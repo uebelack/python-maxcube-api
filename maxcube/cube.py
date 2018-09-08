@@ -39,17 +39,17 @@ class MaxCube(MaxDevice):
     def log(self):
         logger.info('Cube (rf=%s, firmware=%s)' % (self.rf_address, self.firmware_version))
         for device in self.devices:
-            if self.is_thermostat(device):
+            if device.is_thermostat():
                 logger.info('Thermostat (type=%s, rf=%s, room=%s, name=%s, mode=%s, min=%s, max=%s, actual=%s, target=%s, valve=%s)'
                             % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name,
                                device.mode, device.min_temperature, device.max_temperature,
                                device.actual_temperature, device.target_temperature, device.valve_position))
-            elif self.is_wallthermostat(device):
+            elif device.is_wallthermostat():
                 logger.info('WallThermostat (type=%s, rf=%s, room=%s, name=%s, min=%s, max=%s, actual=%s, target=%s)'
                             % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name,
                                device.min_temperature, device.max_temperature,
                                device.actual_temperature, device.target_temperature))
-            elif self.is_windowshutter(device):
+            elif device.is_windowshutter():
                 logger.info('WindowShutter (type=%s, rf=%s, room=%s, name=%s, init=%s, open=%s)'
                             % (device.type, device.rf_address, self.room_by_id(device.room_id).name, device.name,
                                device.initialized, device.is_open))
@@ -118,19 +118,19 @@ class MaxCube(MaxDevice):
 
         device = self.device_by_rf(device_rf_address)
 
-        if device and self.is_thermostat(device):
+        if device and device.is_thermostat():
             device.comfort_temperature = data[18] / 2.0
             device.eco_temperature = data[19] / 2.0
             device.max_temperature = data[20] / 2.0
             device.min_temperature = data[21] / 2.0
 
-        if device and self.is_wallthermostat(device):
+        if device and device.is_wallthermostat():
             device.comfort_temperature = data[18] / 2.0
             device.eco_temperature = data[19] / 2.0
             device.max_temperature = data[20] / 2.0
             device.min_temperature = data[21] / 2.0
 
-        if device and self.is_windowshutter(device):
+        if device and device.is_windowshutter():
             # Pure Speculation based on this:
             # Before: [17][12][162][178][4][0][20][15]KEQ0839778
             # After:  [17][12][162][178][4][1][20][15]KEQ0839778
@@ -214,13 +214,13 @@ class MaxCube(MaxDevice):
                 device.battery = self.resolve_device_battery(bits2)
 
             # Thermostat or Wall Thermostat
-            if device and (self.is_thermostat(device) or self.is_wallthermostat(device)):
+            if device and (device.is_thermostat() or device.is_wallthermostat()):
                 device.target_temperature = (data[pos + 8] & 0x7F) / 2.0
                 bits1, bits2 = struct.unpack('BB', bytearray(data[pos + 5: pos + 7]))
                 device.mode = self.resolve_device_mode(bits2)
 
             # Thermostat
-            if device and self.is_thermostat(device):
+            if device and device.is_thermostat():
                 device.valve_position = data[pos + 7]
                 if device.mode == MAX_DEVICE_MODE_MANUAL or device.mode == MAX_DEVICE_MODE_AUTOMATIC:
                     actual_temperature = ((data[pos + 9] & 0xFF) * 256 + (data[pos + 10] & 0xFF)) / 10.0
@@ -230,11 +230,11 @@ class MaxCube(MaxDevice):
                     device.actual_temperature = None
 
             # Wall Thermostat
-            if device and self.is_wallthermostat(device):
+            if device and device.is_wallthermostat():
                 device.actual_temperature = (((data[pos + 8] & 0x80) << 1) + data[pos + 12]) / 10.0
 
             # Window Shutter
-            if device and self.is_windowshutter(device):
+            if device and device.is_windowshutter():
                 status = data[pos + 6] & 0x03
                 if status > 0:
                     device.is_open = True
@@ -245,14 +245,14 @@ class MaxCube(MaxDevice):
             pos += length + 1
 
     def set_target_temperature(self, thermostat, temperature):
-        if not self.is_thermostat(thermostat) and not self.is_wallthermostat(thermostat):
+        if not thermostat.is_thermostat() and not thermostat.is_wallthermostat():
             logger.error('%s is no (wall-)thermostat!', thermostat.rf_address)
             return
 
         self.set_temperature_mode(thermostat, temperature, thermostat.mode)
 
     def set_mode(self, thermostat, mode):
-        if not self.is_thermostat(thermostat) and not self.is_wallthermostat(thermostat):
+        if not thermostat.is_thermostat() and not thermostat.is_wallthermostat():
             logger.error('%s is no (wall-)thermostat!', thermostat.rf_address)
             return
 
@@ -261,7 +261,7 @@ class MaxCube(MaxDevice):
     def set_temperature_mode(self, thermostat, temperature, mode):
         logger.debug('Setting temperature %s and mode %s on %s!', temperature, mode, thermostat.rf_address)
 
-        if not self.is_thermostat(thermostat) and not self.is_wallthermostat(thermostat):
+        if not thermostat.is_thermostat() and not thermostat.is_wallthermostat():
             logger.error('%s is no (wall-)thermostat!', thermostat.rf_address)
             return
 
@@ -290,18 +290,6 @@ class MaxCube(MaxDevice):
     @classmethod
     def resolve_device_battery(cls, bits):
         return (bits >> 7)
-
-    @classmethod
-    def is_thermostat(cls, device):
-        return device.type == MAX_THERMOSTAT or device.type == MAX_THERMOSTAT_PLUS
-
-    @classmethod
-    def is_wallthermostat(cls, device):
-        return device.type == MAX_WALL_THERMOSTAT
-
-    @classmethod
-    def is_windowshutter(cls, device):
-        return device.type == MAX_WINDOW_SHUTTER
 
     @classmethod
     def parse_rf_address(cls, address):

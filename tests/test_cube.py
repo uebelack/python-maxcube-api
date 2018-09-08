@@ -134,11 +134,11 @@ class TestMaxCube(unittest.TestCase):
     def test_is_thermostat(self):
         device = MaxDevice()
         device.type = MAX_CUBE
-        self.assertEqual(False, self.cube.is_thermostat(device))
+        self.assertEqual(False, device.is_thermostat())
         device.type = MAX_THERMOSTAT
-        self.assertEqual(True, self.cube.is_thermostat(device))
+        self.assertEqual(True, device.is_thermostat())
         device.type = MAX_THERMOSTAT_PLUS
-        self.assertEqual(True, self.cube.is_thermostat(device))
+        self.assertEqual(True, device.is_thermostat())
 
     def test_set_target_temperature(self):
         self.cube.set_target_temperature(self.cube.devices[0], 24.5)
@@ -235,41 +235,41 @@ class TestMaxCubeExtended(unittest.TestCase):
     def test_is_thermostat(self):
         device = MaxDevice()
         device.type = MAX_CUBE
-        self.assertEqual(False, self.cube.is_thermostat(device))
+        self.assertEqual(False, device.is_thermostat())
         device.type = MAX_THERMOSTAT
-        self.assertEqual(True, self.cube.is_thermostat(device))
+        self.assertEqual(True, device.is_thermostat())
         device.type = MAX_THERMOSTAT_PLUS
-        self.assertEqual(True, self.cube.is_thermostat(device))
+        self.assertEqual(True, device.is_thermostat())
         device.type = MAX_WALL_THERMOSTAT
-        self.assertEqual(False, self.cube.is_thermostat(device))
+        self.assertEqual(False, device.is_thermostat())
         device.type = MAX_WINDOW_SHUTTER
-        self.assertEqual(False, self.cube.is_thermostat(device))
+        self.assertEqual(False, device.is_thermostat())
 
     def test_is_wall_thermostat(self):
         device = MaxDevice()
         device.type = MAX_CUBE
-        self.assertEqual(False, self.cube.is_wallthermostat(device))
+        self.assertEqual(False, device.is_wallthermostat())
         device.type = MAX_THERMOSTAT
-        self.assertEqual(False, self.cube.is_wallthermostat(device))
+        self.assertEqual(False, device.is_wallthermostat())
         device.type = MAX_THERMOSTAT_PLUS
-        self.assertEqual(False, self.cube.is_wallthermostat(device))
+        self.assertEqual(False, device.is_wallthermostat())
         device.type = MAX_WALL_THERMOSTAT
-        self.assertEqual(True, self.cube.is_wallthermostat(device))
+        self.assertEqual(True, device.is_wallthermostat())
         device.type = MAX_WINDOW_SHUTTER
-        self.assertEqual(False, self.cube.is_wallthermostat(device))
+        self.assertEqual(False, device.is_wallthermostat())
 
     def test_is_window_shutter(self):
         device = MaxDevice()
         device.type = MAX_CUBE
-        self.assertEqual(False, self.cube.is_windowshutter(device))
+        self.assertEqual(False, device.is_windowshutter())
         device.type = MAX_THERMOSTAT
-        self.assertEqual(False, self.cube.is_windowshutter(device))
+        self.assertEqual(False, device.is_windowshutter())
         device.type = MAX_THERMOSTAT_PLUS
-        self.assertEqual(False, self.cube.is_windowshutter(device))
+        self.assertEqual(False, device.is_windowshutter())
         device.type = MAX_WALL_THERMOSTAT
-        self.assertEqual(False, self.cube.is_windowshutter(device))
+        self.assertEqual(False, device.is_windowshutter())
         device.type = MAX_WINDOW_SHUTTER
-        self.assertEqual(True, self.cube.is_windowshutter(device))
+        self.assertEqual(True, device.is_windowshutter())
 
     def test_set_target_temperature_thermostat(self):
         self.cube.set_target_temperature(self.cube.devices[0], 24.5)

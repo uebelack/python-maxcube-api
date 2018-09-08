@@ -21,3 +21,12 @@ class MaxDevice(object):
         self.name = None
         self.serial = None
         self.battery = None
+
+    def is_thermostat(self):
+        return self.type in (MAX_THERMOSTAT, MAX_THERMOSTAT_PLUS)
+
+    def is_wallthermostat(self):
+        return self.type == MAX_WALL_THERMOSTAT
+
+    def is_windowshutter(self):
+        return self.type == MAX_WINDOW_SHUTTER
