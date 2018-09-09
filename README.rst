@@ -20,7 +20,28 @@ Basic usage:
         print(device.actual_temperature)
 
 This api was build for the integration of the Max! thermostats into `Home Assistant <https://home-assistant.io>`__ and
-does only cover the functions needed for the integration.
+mostly only covers the functions needed for the integration.
+
+It does also include functions needed to save and restore thermostat programmes.  For example:
+
+
+.. code:: shell
+    # dump programmes (and other data) to a JSON file
+    python3 prog.py dump backup.json
+
+    # load programmes (not other data!) from a JSON file
+    python3 prog.py load backup.json
+
+
+Running tests
+=============
+
+.. code:: python
+
+   python -m unittest discover tests/
+
+Acknowledgements
+================
 
 Thanks to:
 
@@ -33,8 +54,3 @@ Thanks to:
    :target: https://travis-ci.org/goodfield/python-maxcube-api
 .. |Coverage Status| image:: https://coveralls.io/repos/goodfield/python-maxcube-api/badge.svg?branch=master&service=github
    :target: https://coveralls.io/github/goodfield/python-maxcube-api?branch=master
-
-
-
-
-

@@ -51,6 +51,9 @@ INIT_RESPONSE_2 = \
     'gIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFIA==\n\r' \
     'L:DAoIgewSGAQQAAAA5QYMorL3EhALDi66ChIYABAAAAA=\n\r'
 
+INIT_PROGRAMME_1 = {'monday': [{'until': '05:30', 'temp': 8}, {'until': '06:30', 'temp': 21}, {'until': '23:55', 'temp': 8}, {'until': '24:00', 'temp': 8}], 'tuesday': [{'until': '05:30', 'temp': 8}, {'until': '06:30', 'temp': 21}, {'until': '23:55', 'temp': 8}, {'until': '24:00', 'temp': 8}], 'friday': [{'until': '05:30', 'temp': 8}, {'until': '06:30', 'temp': 21}, {'until': '23:55', 'temp': 8}, {'until': '24:00', 'temp': 8}], 'wednesday': [{'until': '05:30', 'temp': 8}, {'until': '06:30', 'temp': 21}, {'until': '23:55', 'temp': 8}, {'until': '24:00', 'temp': 8}], 'thursday': [{'until': '05:30', 'temp': 8}, {'until': '06:30', 'temp': 21}, {'until': '23:55', 'temp': 8}, {'until': '24:00', 'temp': 8}], 'sunday': [{'until': '08:00', 'temp': 8}, {'until': '10:00', 'temp': 21}, {'until': '24:00', 'temp': 8}], 'saturday': [{'until': '08:00', 'temp': 8}, {'until': '10:00', 'temp': 21}, {'until': '24:00', 'temp': 8}]}
+
+
 class MaxCubeConnectionMock(MaxCubeConnection):
     def __init__(self, init_response):
         super(MaxCubeConnectionMock, self).__init__(None, None)
@@ -342,3 +345,37 @@ class TestMaxCubeExtended(unittest.TestCase):
         room = self.cube.room_by_id(3)
 
         self.assertEqual(None, room)
+
+    def test_set_programme(self):
+        self.cube.set_programme(
+            self.cube.devices[0],
+            "saturday",
+            [
+                {'temp': 20.5, 'until': '13:30'},
+                {'temp': 18, 'until': '24:00'}
+            ]
+        )
+        self.assertEqual('s:AAAQAAAADi66AQBSokkgAAAAAAA=\r\n', self.cube.connection.command)
+
+    def test_set_programme_already_existing_does_nothing(self):
+        result = self.cube.set_programme(
+            self.cube.devices[0],
+            'saturday',
+            INIT_PROGRAMME_1['saturday'])
+        self.assertEqual(result, None)
+        self.assertEqual(self.cube.connection.command, None)
+
+    def test_get_device_as_dict(self):
+        device = self.cube.devices[0]
+        result = device.to_dict()
+        self.assertEqual(result['name'], 'Thermostat')
+        self.assertEqual(result['comfort_temperature'], 21.5)
+        self.assertEqual(
+            result['programme']['monday'],
+            [
+                {'until': '05:30', 'temp': 8},
+                {'until': '06:30', 'temp': 21},
+                {'until': '23:55', 'temp': 8},
+                {'until': '24:00', 'temp': 8}
+            ]
+        )
