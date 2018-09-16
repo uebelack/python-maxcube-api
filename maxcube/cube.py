@@ -341,25 +341,24 @@ class MaxCube(MaxDevice):
             devices.append(device.to_dict())
         return json.dumps(devices, indent=2)
 
-    def set_programmes_from_config(self, config):
-        with open(config, 'rb') as f:
-            config = json.load(f)
-            with self.connection_manager():
-                for device_config in config:
-                    device = self.device_by_rf(device_config['rf_address'])
-                    programme = device_config['programme']
-                    if not programme:
-                        # e.g. a wall thermostat
-                        continue
-                    for day, metadata in programme.items():
-                        result = self.set_programme(
-                            device, day, metadata)
-                        if result:
-                            duty_cycle, command_result, memory_slots = result[2:].split(",")
-                            if int(command_result) > 0:
-                                raise "Error"
-                            if duty_cycle == 100 and memory_slots == 0:
-                                raise "Run out of duty cycle and memory slots"
+    def set_programmes_from_config(self, config_file):
+        config = json.load(config_file)
+        with self.connection_manager():
+            for device_config in config:
+                device = self.device_by_rf(device_config['rf_address'])
+                programme = device_config['programme']
+                if not programme:
+                    # e.g. a wall thermostat
+                    continue
+                for day, metadata in programme.items():
+                    result = self.set_programme(
+                        device, day, metadata)
+                    if result:
+                        duty_cycle, command_result, memory_slots = result[2:].split(",")
+                        if int(command_result) > 0:
+                            raise "Error"
+                        if duty_cycle == 100 and memory_slots == 0:
+                            raise "Run out of duty cycle and memory slots"
 
 
     @classmethod

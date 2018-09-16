@@ -27,10 +27,10 @@ It does also include functions needed to save and restore thermostat programmes.
 
 .. code:: shell
     # dump programmes (and other data) to a JSON file
-    python3 prog.py dump backup.json
+    python3 prog.py dump --host=192.168.0.11 --port=62910 > backup.json
 
     # load programmes (not other data!) from a JSON file
-    python3 prog.py load backup.json
+    python3 prog.py load --host=192.168.0.11 --port=62910 < backup.json
 
 
 Running tests

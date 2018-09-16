@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 from maxcube.connection import MaxCubeConnection
 from maxcube.cube import MaxCube
@@ -7,12 +8,12 @@ from maxcube.cube import MaxCube
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Set or dump thermostat programmes')
+    parser.add_argument('--host', required=True)
+    parser.add_argument('--port', required=True, type=int)
     parser.add_argument('cmd', choices=['load', 'dump'])
-    parser.add_argument('filename')
     args = parser.parse_args()
-    cube = MaxCube(MaxCubeConnection('192.168.1.111', 62910))
+    cube = MaxCube(MaxCubeConnection(args.host, args.port))
     if args.cmd == 'load':
-        cube.set_programmes_from_config(args.filename)
+        cube.set_programmes_from_config(sys.stdin)
     elif args.cmd == 'dump':
-        with open(args.filename, "w") as f:
-            f.write(cube.devices_as_json())
+        print(cube.devices_as_json())
