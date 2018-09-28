@@ -49,7 +49,10 @@ INIT_RESPONSE_2 = \
     'C:0e2eba,0g4uugEBEKBLRVExMDg2NDM3KyE9CQcYAzAM/wAgYFR4ISAhICEgISAhIEUgRSBFIEUgRSBFICBgVHghICEgISAhICEgRSBFIEUgR' \
     'SBFIEUgIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFICBCVE4hHyEgISAhICEgRSBFIEUgRSBFIEU' \
     'gIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFIA==\n\r' \
-    'L:DAoIgewSGAQQAAAA5QYMorL3EhALDi66ChIYABAAAAA=\n\r' 
+    'L:DAoIgewSGAQQAAAA5QYMorL3EhALDi66ChIYABAAAAA=\n\r'
+
+INIT_PROGRAMME_1 = {'monday': [{'until': '05:30', 'temp': 8}, {'until': '06:30', 'temp': 21}, {'until': '23:55', 'temp': 8}, {'until': '24:00', 'temp': 8}], 'tuesday': [{'until': '05:30', 'temp': 8}, {'until': '06:30', 'temp': 21}, {'until': '23:55', 'temp': 8}, {'until': '24:00', 'temp': 8}], 'friday': [{'until': '05:30', 'temp': 8}, {'until': '06:30', 'temp': 21}, {'until': '23:55', 'temp': 8}, {'until': '24:00', 'temp': 8}], 'wednesday': [{'until': '05:30', 'temp': 8}, {'until': '06:30', 'temp': 21}, {'until': '23:55', 'temp': 8}, {'until': '24:00', 'temp': 8}], 'thursday': [{'until': '05:30', 'temp': 8}, {'until': '06:30', 'temp': 21}, {'until': '23:55', 'temp': 8}, {'until': '24:00', 'temp': 8}], 'sunday': [{'until': '08:00', 'temp': 8}, {'until': '10:00', 'temp': 21}, {'until': '24:00', 'temp': 8}], 'saturday': [{'until': '08:00', 'temp': 8}, {'until': '10:00', 'temp': 21}, {'until': '24:00', 'temp': 8}]}
+
 
 class MaxCubeConnectionMock(MaxCubeConnection):
     def __init__(self, init_response):
@@ -134,11 +137,11 @@ class TestMaxCube(unittest.TestCase):
     def test_is_thermostat(self):
         device = MaxDevice()
         device.type = MAX_CUBE
-        self.assertEqual(False, self.cube.is_thermostat(device))
+        self.assertEqual(False, device.is_thermostat())
         device.type = MAX_THERMOSTAT
-        self.assertEqual(True, self.cube.is_thermostat(device))
+        self.assertEqual(True, device.is_thermostat())
         device.type = MAX_THERMOSTAT_PLUS
-        self.assertEqual(True, self.cube.is_thermostat(device))
+        self.assertEqual(True, device.is_thermostat())
 
     def test_set_target_temperature(self):
         self.cube.set_target_temperature(self.cube.devices[0], 24.5)
@@ -224,7 +227,7 @@ class TestMaxCubeExtended(unittest.TestCase):
         self.assertEqual(MAX_DEVICE_MODE_AUTOMATIC, device.mode)
         self.assertEqual(22.9, device.actual_temperature)
         self.assertEqual(8.0, device.target_temperature)
-        
+
         device = self.cube.devices[2]
         self.assertEqual(False, device.is_open)
 
@@ -235,41 +238,41 @@ class TestMaxCubeExtended(unittest.TestCase):
     def test_is_thermostat(self):
         device = MaxDevice()
         device.type = MAX_CUBE
-        self.assertEqual(False, self.cube.is_thermostat(device))
+        self.assertEqual(False, device.is_thermostat())
         device.type = MAX_THERMOSTAT
-        self.assertEqual(True, self.cube.is_thermostat(device))
+        self.assertEqual(True, device.is_thermostat())
         device.type = MAX_THERMOSTAT_PLUS
-        self.assertEqual(True, self.cube.is_thermostat(device))
+        self.assertEqual(True, device.is_thermostat())
         device.type = MAX_WALL_THERMOSTAT
-        self.assertEqual(False, self.cube.is_thermostat(device))
+        self.assertEqual(False, device.is_thermostat())
         device.type = MAX_WINDOW_SHUTTER
-        self.assertEqual(False, self.cube.is_thermostat(device))
+        self.assertEqual(False, device.is_thermostat())
 
     def test_is_wall_thermostat(self):
         device = MaxDevice()
         device.type = MAX_CUBE
-        self.assertEqual(False, self.cube.is_wallthermostat(device))
+        self.assertEqual(False, device.is_wallthermostat())
         device.type = MAX_THERMOSTAT
-        self.assertEqual(False, self.cube.is_wallthermostat(device))
+        self.assertEqual(False, device.is_wallthermostat())
         device.type = MAX_THERMOSTAT_PLUS
-        self.assertEqual(False, self.cube.is_wallthermostat(device))
+        self.assertEqual(False, device.is_wallthermostat())
         device.type = MAX_WALL_THERMOSTAT
-        self.assertEqual(True, self.cube.is_wallthermostat(device))
+        self.assertEqual(True, device.is_wallthermostat())
         device.type = MAX_WINDOW_SHUTTER
-        self.assertEqual(False, self.cube.is_wallthermostat(device))
+        self.assertEqual(False, device.is_wallthermostat())
 
     def test_is_window_shutter(self):
         device = MaxDevice()
         device.type = MAX_CUBE
-        self.assertEqual(False, self.cube.is_windowshutter(device))
+        self.assertEqual(False, device.is_windowshutter())
         device.type = MAX_THERMOSTAT
-        self.assertEqual(False, self.cube.is_windowshutter(device))
+        self.assertEqual(False, device.is_windowshutter())
         device.type = MAX_THERMOSTAT_PLUS
-        self.assertEqual(False, self.cube.is_windowshutter(device))
+        self.assertEqual(False, device.is_windowshutter())
         device.type = MAX_WALL_THERMOSTAT
-        self.assertEqual(False, self.cube.is_windowshutter(device))
+        self.assertEqual(False, device.is_windowshutter())
         device.type = MAX_WINDOW_SHUTTER
-        self.assertEqual(True, self.cube.is_windowshutter(device))
+        self.assertEqual(True, device.is_windowshutter())
 
     def test_set_target_temperature_thermostat(self):
         self.cube.set_target_temperature(self.cube.devices[0], 24.5)
@@ -325,7 +328,7 @@ class TestMaxCubeExtended(unittest.TestCase):
 
     def test_get_rooms(self):
         rooms = self.cube.get_rooms()
-    
+
         self.assertEqual('Badezimmer', rooms[0].name)
         self.assertEqual(1, rooms[0].id)
 
@@ -334,7 +337,7 @@ class TestMaxCubeExtended(unittest.TestCase):
 
     def test_room_by_id(self):
         room = self.cube.room_by_id(1)
-        
+
         self.assertEqual('Badezimmer', room.name)
         self.assertEqual(1, room.id)
 
@@ -342,3 +345,37 @@ class TestMaxCubeExtended(unittest.TestCase):
         room = self.cube.room_by_id(3)
 
         self.assertEqual(None, room)
+
+    def test_set_programme(self):
+        self.cube.set_programme(
+            self.cube.devices[0],
+            "saturday",
+            [
+                {'temp': 20.5, 'until': '13:30'},
+                {'temp': 18, 'until': '24:00'}
+            ]
+        )
+        self.assertEqual('s:AAAQAAAADi66AQBSokkgAAAAAAA=\r\n', self.cube.connection.command)
+
+    def test_set_programme_already_existing_does_nothing(self):
+        result = self.cube.set_programme(
+            self.cube.devices[0],
+            'saturday',
+            INIT_PROGRAMME_1['saturday'])
+        self.assertEqual(result, None)
+        self.assertEqual(self.cube.connection.command, None)
+
+    def test_get_device_as_dict(self):
+        device = self.cube.devices[0]
+        result = device.to_dict()
+        self.assertEqual(result['name'], 'Thermostat')
+        self.assertEqual(result['comfort_temperature'], 21.5)
+        self.assertEqual(
+            result['programme']['monday'],
+            [
+                {'until': '05:30', 'temp': 8},
+                {'until': '06:30', 'temp': 21},
+                {'until': '23:55', 'temp': 8},
+                {'until': '24:00', 'temp': 8}
+            ]
+        )
