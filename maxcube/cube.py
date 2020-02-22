@@ -178,10 +178,13 @@ class MaxCube(MaxDevice):
             device_rf_address = self.parse_rf_address(data[pos: pos + 3])
             pos += 3
 
-            room = MaxRoom()
-            room.id = room_id
-            room.name = name
-            self.rooms.append(room)
+            room = self.room_by_id(room_id)
+
+            if not room:
+                room = MaxRoom()
+                room.id = room_id
+                room.name = name
+                self.rooms.append(room)
 
         num_devices = data[pos]
         pos += 1
@@ -293,7 +296,7 @@ class MaxCube(MaxDevice):
                 room = '0' + room
             target_temperature = int(temperature * 2) + (mode << 6)
 
-            byte_cmd = '000440000000' + rf_address + room + hex(target_temperature)[2:]
+            byte_cmd = '000440000000' + rf_address + room + hex(target_temperature)[2:].zfill(2)
             logger.debug('Request: ' + byte_cmd)
             command = 's:' + base64.b64encode(bytearray.fromhex(byte_cmd)).decode('utf-8') + '\r\n'
             logger.debug('Command: ' + command)
