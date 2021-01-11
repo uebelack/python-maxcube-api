@@ -1,5 +1,5 @@
 eQ-3/ELV MAX! Cube Python API |Build Status| |Coverage Status|
-=============================
+===============================================================
 
 A python api to control the Max! Cube thermostats:
 
@@ -26,6 +26,7 @@ It does also include functions needed to save and restore thermostat programmes.
 
 
 .. code:: shell
+
     # dump programmes (and other data) to a JSON file
     python3 prog.py dump --host=192.168.0.11 --port=62910 > backup.json
 
