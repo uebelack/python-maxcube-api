@@ -185,6 +185,8 @@ class MaxCube(MaxDevice):
                 room.id = room_id
                 room.name = name
                 self.rooms.append(room)
+            else:
+                room.name = name
 
         num_devices = data[pos]
         pos += 1
