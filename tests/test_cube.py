@@ -211,10 +211,10 @@ class TestMaxCubeExtended(unittest.TestCase):
         self.assertEqual('KEQ0839778', self.cube.devices[2].serial)
         self.assertEqual(1, self.cube.devices[3].room_id)
 
-        self.assertEqual('Badezimmer', self.cube.rooms[0].name)
+        self.assertEqual('Kitchen', self.cube.rooms[0].name)
         self.assertEqual(1, self.cube.rooms[0].id)
 
-        self.assertEqual('Wohnzimmer', self.cube.rooms[1].name)
+        self.assertEqual('Living', self.cube.rooms[1].name)
         self.assertEqual(2, self.cube.rooms[1].id)
 
     def test_parse_l_message(self):
