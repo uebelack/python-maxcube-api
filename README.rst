@@ -50,7 +50,7 @@ Thanks to:
 -  `https://github.com/aleszoulek/maxcube <https://github.com/aleszoulek/maxcube>`__
 -  `openhab integration <https://github.com/openhab/openhab2/tree/master/addons/binding/org.openhab.binding.max>`__
 
-.. |Build Status| image:: https://travis-ci.org/goodfield/python-maxcube-api.svg?branch=master
-   :target: https://travis-ci.org/goodfield/python-maxcube-api
-.. |Coverage Status| image:: https://coveralls.io/repos/goodfield/python-maxcube-api/badge.svg?branch=master&service=github
-   :target: https://coveralls.io/github/goodfield/python-maxcube-api?branch=master
+.. |Build Status| image:: https://travis-ci.org/hackercowboy/python-maxcube-api.svg?branch=master
+   :target: https://travis-ci.org/hackercowboy/python-maxcube-api
+.. |Coverage Status| image:: https://coveralls.io/repos/hackercowboy/python-maxcube-api/badge.svg?branch=master&service=github
+   :target: https://coveralls.io/github/hackercowboy/python-maxcube-api?branch=master
