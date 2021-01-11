@@ -293,7 +293,7 @@ class MaxCube(MaxDevice):
                 room = '0' + room
             target_temperature = int(temperature * 2) + (mode << 6)
 
-            byte_cmd = '000440000000' + rf_address + room + hex(target_temperature)[2:]
+            byte_cmd = '000440000000' + rf_address + room + to_hex(target_temperature)
             logger.debug('Request: ' + byte_cmd)
             command = 's:' + base64.b64encode(bytearray.fromhex(byte_cmd)).decode('utf-8') + '\r\n'
             logger.debug('Command: ' + command)
