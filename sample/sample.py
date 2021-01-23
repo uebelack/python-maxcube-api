@@ -1,5 +1,4 @@
 from maxcube.cube import MaxCube
-from maxcube.connection import MaxCubeConnection
 from maxcube.device import \
     MAX_THERMOSTAT, \
     MAX_THERMOSTAT_PLUS, \
@@ -11,7 +10,7 @@ from maxcube.device import \
     MAX_DEVICE_MODE_BOOST
 import logging
 
-cube = MaxCube(MaxCubeConnection('192.168.0.20', 62910))
+cube = MaxCube('192.168.0.20', 62910)
 
 for room in cube.rooms:
     print("Room: " + room.name)

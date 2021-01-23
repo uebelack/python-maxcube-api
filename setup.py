@@ -15,5 +15,6 @@ setup(
     url='https://github.com/hackercowboy/python-maxcube-api.git',
     license=license,
     packages=['maxcube'],
-    test_suite="tests.maxcube_suite"
+    test_suite="tests",
+    python_requires='>=3.7'
 )

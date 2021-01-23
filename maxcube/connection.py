@@ -1,49 +1,59 @@
 import socket
 import logging
+import time
+
+from .deadline import Deadline
+from .message import Message
 
 logger = logging.getLogger(__name__)
 
+BLOCK_SIZE = 4096
+DEFAULT_TIMEOUT = 2.0
 
-class MaxCubeConnection(object):
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
-        self.socket = None
-        self.response = None
+class Connection(object):
+    def __init__(self, host: str, port: int):
+        self.__buffer: bytearray = bytearray()
+        self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__socket.settimeout(DEFAULT_TIMEOUT)
+        self.__socket.connect((host, port))
+        logger.debug('Connected to %s:%d!' % (host, port))
 
-    def connect(self):
-        logger.debug('Connecting to Max! Cube at ' + self.host + ':' + str(self.port))
+    def __read_buffered_msg(self) -> Message:
+        buf = self.__buffer
+        pos = buf.find(b'\r\n')
+        if pos < 0:
+            return None
+        result = buf[0:pos]
+        del buf[0:pos+2]
+        return Message.decode(result)
+
+    def recv(self, deadline: Deadline) -> Message:
+        msg = self.__read_buffered_msg()
         try:
-            if self.socket:
-                self.disconnect()
+            while msg is None:
+                self.__socket.settimeout(deadline.remaining(lower_bound=0.001))
+                tmp = self.__socket.recv(BLOCK_SIZE)
+                if len(tmp) > 0:
+                    self.__buffer.extend(tmp)
+                    msg = self.__read_buffered_msg()
+                    logger.debug("received: %s" % msg)
+                else:
+                    logger.debug('Connection shutdown by remote peer')
+                    self.close()
+                    return None
+        except socket.timeout:
+            logger.debug('readline timed out')
+        finally:
+            self.__socket.settimeout(DEFAULT_TIMEOUT)
+        return msg
+
+    def send(self, msg: Message):
+        self.__socket.send(msg.encode())
+        logger.debug("sent: %s" % msg)
+
+    def close(self):
+        try:
+            self.__socket.close()
+            logger.debug('closed')
         except:
-            logger.debug('Tried disconnecting from cube, caught Exception probably due to stale connection.')
-
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(2)
-        self.socket.connect((self.host, self.port))
-        self.read()
-
-    def read(self):
-        buffer_size = 4096
-        buffer = bytearray([])
-        more = True
-
-        while more:
-            try:
-                tmp = self.socket.recv(buffer_size)
-                more = len(tmp) > 0
-                buffer += tmp
-            except socket.timeout:
-                break
-        self.response = buffer.decode('utf-8')
-
-    def send(self, command):
-        self.socket.send(command.encode('utf-8'))
-        self.read()
-
-    def disconnect(self):
-        if self.socket:
-            self.send('q:\r\n')
-            self.socket.close()
-        self.socket = None
+            logger.debug('Unable to close connection. Dropping it...')
