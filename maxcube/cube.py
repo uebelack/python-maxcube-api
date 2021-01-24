@@ -1,8 +1,8 @@
-from contextlib import contextmanager
 import json
 import base64
 import struct
 
+from .commander import Commander
 from maxcube.device import \
     MaxDevice, \
     MAX_CUBE, \
@@ -32,29 +32,19 @@ DAYS = ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday',
 
 
 class MaxCube(MaxDevice):
-    def __init__(self, connection):
+    def __init__(self, host: str, port: int):
         super(MaxCube, self).__init__()
-        self.connection = connection
+        self.__commander = Commander(host, port)
         self.name = 'Cube'
         self.type = MAX_CUBE
         self.firmware_version = None
         self.devices = []
         self.rooms = []
-        self.init()
-
-    def init(self):
         self.update()
         self.log()
 
-    @contextmanager
-    def connection_manager(self):
-        if self.connection.socket:
-            # already connected
-            yield
-        else:
-            self.connection.connect()
-            yield
-            self.connection.disconnect()
+    def disconnect(self):
+        self.__commander.disconnect()
 
     def log(self):
         logger.info('Cube (rf=%s, firmware=%s)' % (self.rf_address, self.firmware_version))
@@ -77,10 +67,7 @@ class MaxCube(MaxDevice):
                 logger.info('Device (rf=%s, name=%s' % (device.rf_address, device.name))
 
     def update(self):
-        self.connection.connect()
-        response = self.connection.response
-        self.parse_response(response)
-        self.connection.disconnect()
+        self.__parse_responses(self.__commander.update())
 
     def get_devices(self):
         return self.devices
@@ -109,28 +96,25 @@ class MaxCube(MaxDevice):
                 return room
         return None
 
-    def parse_response(self, response):
-        try:
-            lines = str.split(str(response), '\n')
-        except:
-            lines = str.split(response, '\n')
-
-        for line in lines:
-            line = line.strip()
-            if line and len(line) > 10:
-                if line[:1] == 'C':
-                    self.parse_c_message(line.strip())
-                elif line[:1] == 'H':
-                    self.parse_h_message(line.strip())
-                elif line[:1] == 'L':
-                    self.parse_l_message(line.strip())
-                elif line[:1] == 'M':
-                    self.parse_m_message(line.strip())
+    def __parse_responses(self, messages):
+        for msg in messages:
+            cmd = msg.cmd
+            if cmd == 'C':
+                self.parse_c_message(msg.arg)
+            elif cmd == 'H':
+                self.parse_h_message(msg.arg)
+            elif cmd == 'L':
+                self.parse_l_message(msg.arg)
+            elif cmd == 'M':
+                self.parse_m_message(msg.arg)
+            else:
+                logger.debug('Ignored unsupported message: %s' % (msg))
 
     def parse_c_message(self, message):
         logger.debug('Parsing c_message: ' + message)
-        device_rf_address = message[1:].split(',')[0][1:].upper()
-        data = bytearray(base64.b64decode(message[2:].split(',')[1]))
+        params = message.split(',')
+        device_rf_address = params[0].upper()
+        data = bytearray(base64.b64decode(params[1]))
 
         length = data[0]
         rf_address = self.parse_rf_address(data[1: 3])
@@ -159,13 +143,13 @@ class MaxCube(MaxDevice):
 
     def parse_h_message(self, message):
         logger.debug('Parsing h_message: ' + message)
-        tokens = message[2:].split(',')
+        tokens = message.split(',')
         self.rf_address = tokens[1]
         self.firmware_version = (tokens[2][0:2]) + '.' + (tokens[2][2:4])
 
     def parse_m_message(self, message):
         logger.debug('Parsing m_message: ' + message)
-        data = bytearray(base64.b64decode(message[2:].split(',')[2]))
+        data = bytearray(base64.b64decode(message.split(',')[2]))
         num_rooms = data[2]
 
         pos = 3
@@ -225,7 +209,7 @@ class MaxCube(MaxDevice):
 
     def parse_l_message(self, message):
         logger.debug('Parsing l_message: ' + message)
-        data = bytearray(base64.b64decode(message[2:]))
+        data = bytearray(base64.b64decode(message))
         pos = 0
 
         while pos < len(data):
@@ -271,74 +255,60 @@ class MaxCube(MaxDevice):
             pos += length + 1
 
     def set_target_temperature(self, thermostat, temperature):
-        if not thermostat.is_thermostat() and not thermostat.is_wallthermostat():
-            logger.error('%s is no (wall-)thermostat!', thermostat.rf_address)
-            return
-
-        self.set_temperature_mode(thermostat, temperature, thermostat.mode)
+        return self.set_temperature_mode(thermostat, temperature, None)
 
     def set_mode(self, thermostat, mode):
+        return self.set_temperature_mode(thermostat, None, mode)
+
+    def set_temperature_mode(self, thermostat, temperature, mode):
+        logger.debug('Setting temperature %s and mode %s on %s!', temperature, mode, thermostat.rf_address)
+
         if not thermostat.is_thermostat() and not thermostat.is_wallthermostat():
             logger.error('%s is no (wall-)thermostat!', thermostat.rf_address)
             return
 
-        self.set_temperature_mode(thermostat, thermostat.target_temperature, mode)
+        if mode is None:
+            mode = thermostat.mode
+        if temperature is None:
+            temperature = 0 if mode == MAX_DEVICE_MODE_AUTOMATIC else thermostat.target_temperature
 
-    def set_temperature_mode(self, thermostat, temperature, mode):
-        with self.connection_manager():
-            logger.debug('Setting temperature %s and mode %s on %s!', temperature, mode, thermostat.rf_address)
+        rf_address = thermostat.rf_address
+        room = to_hex(thermostat.room_id)
+        target_temperature = int(temperature * 2) + (mode << 6)
 
-            if not thermostat.is_thermostat() and not thermostat.is_wallthermostat():
-                logger.error('%s is no (wall-)thermostat!', thermostat.rf_address)
-                return
-
-            rf_address = thermostat.rf_address
-            room = str(thermostat.room_id)
-            if thermostat.room_id < 10:
-                room = '0' + room
-            target_temperature = int(temperature * 2) + (mode << 6)
-
-            byte_cmd = '000440000000' + rf_address + room + hex(target_temperature)[2:].zfill(2)
-            logger.debug('Request: ' + byte_cmd)
-            command = 's:' + base64.b64encode(bytearray.fromhex(byte_cmd)).decode('utf-8') + '\r\n'
-            logger.debug('Command: ' + command)
-            self.connection.send(command)
-            logger.debug('Response: ' + self.connection.response)
-            thermostat.target_temperature = int(temperature * 2) / 2.0
+        byte_cmd = '000440000000' + rf_address + room + to_hex(target_temperature)
+        if self.__commander.send_radio_msg(byte_cmd):
             thermostat.mode = mode
+            if temperature > 0:
+                thermostat.target_temperature = int(temperature * 2) / 2.0
+            return True
+        return False
 
     def set_programme(self, thermostat, day, metadata):
+        # compare with current programme
         if thermostat.programme[day] == metadata:
             logger.debug("Skipping setting unchanged programme for " + day)
             return
-        with self.connection_manager():
-            # compare with current programme
-            heat_time_tuples = [
-                (x["temp"], x["until"]) for x in metadata]
-            # pad heat_time_tuples so that there are always seven
-            for _ in range(7 - len(heat_time_tuples)):
-                heat_time_tuples.append((0, "00:00"))
-            command = ""
-            if thermostat.is_room():
-                rf_flag = RF_FLAG_IS_ROOM
-                devices = self.cube.devices_by_room(thermostat)
-            else:
-                rf_flag = RF_FLAG_IS_DEVICE
-                devices = [thermostat]
-            command += UNKNOWN + rf_flag + CMD_SET_PROG + RF_NULL_ADDRESS
-            for device in devices:
-                command += device.rf_address
-                command += to_hex(device.room_id)
-                command += to_hex(n_from_day_of_week(day))
-                for heat, time in heat_time_tuples:
-                    command += temp_and_time(heat, time)
-            logger.debug('Request: ' + command)
-            command = 's:' + base64.b64encode(
-                bytearray.fromhex(command)).decode('utf-8') + '\r\n'
-            logger.debug('Command: ' + command)
-            self.connection.send(command)
-            logger.debug('Response: ' + self.connection.response)
-            return self.connection.response
+
+        heat_time_tuples = [(x["temp"], x["until"]) for x in metadata]
+        # pad heat_time_tuples so that there are always seven
+        for _ in range(7 - len(heat_time_tuples)):
+            heat_time_tuples.append((0, "00:00"))
+        command = ""
+        if thermostat.is_room():
+            rf_flag = RF_FLAG_IS_ROOM
+            devices = self.devices_by_room(thermostat)
+        else:
+            rf_flag = RF_FLAG_IS_DEVICE
+            devices = [thermostat]
+        command += UNKNOWN + rf_flag + CMD_SET_PROG + RF_NULL_ADDRESS
+        for device in devices:
+            command += device.rf_address
+            command += to_hex(device.room_id)
+            command += to_hex(n_from_day_of_week(day))
+            for heat, time in heat_time_tuples:
+                command += temp_and_time(heat, time)
+        return self.__commander.send_radio_msg(command)
 
     def devices_as_json(self):
         devices = []
@@ -348,23 +318,14 @@ class MaxCube(MaxDevice):
 
     def set_programmes_from_config(self, config_file):
         config = json.load(config_file)
-        with self.connection_manager():
-            for device_config in config:
-                device = self.device_by_rf(device_config['rf_address'])
-                programme = device_config['programme']
-                if not programme:
-                    # e.g. a wall thermostat
-                    continue
-                for day, metadata in programme.items():
-                    result = self.set_programme(
-                        device, day, metadata)
-                    if result:
-                        duty_cycle, command_result, memory_slots = result[2:].split(",")
-                        if int(command_result) > 0:
-                            raise "Error"
-                        if duty_cycle == 100 and memory_slots == 0:
-                            raise "Run out of duty cycle and memory slots"
-
+        for device_config in config:
+            device = self.device_by_rf(device_config['rf_address'])
+            programme = device_config['programme']
+            if not programme:
+                # e.g. a wall thermostat
+                continue
+            for day, metadata in programme.items():
+                self.set_programme(device, day, metadata)
 
     @classmethod
     def resolve_device_mode(cls, bits):
@@ -424,4 +385,4 @@ def temp_and_time(temp, time):
 
 def to_hex(value):
     "Return value as hex word"
-    return format(value, "02x")
+    return format(value, "02X")

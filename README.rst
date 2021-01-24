@@ -39,7 +39,7 @@ Running tests
 
 .. code:: python
 
-   python -m unittest discover tests/
+   python3 -m unittest discover tests/
 
 Acknowledgements
 ================
