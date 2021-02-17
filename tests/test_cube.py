@@ -102,6 +102,7 @@ class TestMaxCube(TestCase):
 
     def test_init(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_1)
+        self.assertEqual('KEQ0566338', self.cube.serial)
         self.assertEqual('0b6475', self.cube.rf_address)
         self.assertEqual('Cube', self.cube.name)
         self.assertEqual('01.13', self.cube.firmware_version)
@@ -234,6 +235,7 @@ class TestMaxCube(TestCase):
 
     def test_init_2(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)
+        self.assertEqual('JEQ0341267', self.cube.serial)
         self.assertEqual('015d2a', self.cube.rf_address)
         self.assertEqual('Cube', self.cube.name)
         self.assertEqual('01.13', self.cube.firmware_version)
