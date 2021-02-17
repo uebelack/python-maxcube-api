@@ -144,6 +144,7 @@ class MaxCube(MaxDevice):
     def parse_h_message(self, message):
         logger.debug('Parsing h_message: ' + message)
         tokens = message.split(',')
+        self.serial = tokens[0]
         self.rf_address = tokens[1]
         self.firmware_version = (tokens[2][0:2]) + '.' + (tokens[2][2:4])
 

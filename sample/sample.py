@@ -12,6 +12,7 @@ import logging
 
 cube = MaxCube('192.168.0.20', 62910)
 
+print("Serial: %s" % (cube.serial))
 for room in cube.rooms:
     print("Room: " + room.name)
     for device in cube.devices_by_room(room):
