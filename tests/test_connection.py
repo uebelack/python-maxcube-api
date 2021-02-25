@@ -23,7 +23,7 @@ class TestConnection(TestCase):
         self.connect(socketMock)
         self.socket.recv.return_value = b'A:B\r\n'
 
-        self.assertEquals(Message('A', 'B'),
+        self.assertEqual(Message('A', 'B'),
             self.connection.recv(TEST_TIMEOUT.deadline()))
         self.socket.close.assert_not_called()
 
@@ -31,17 +31,17 @@ class TestConnection(TestCase):
         self.connect(socketMock)
         self.socket.recv.side_effect = [b'A:', b'B\r\n']
 
-        self.assertEquals(Message('A', 'B'),
+        self.assertEqual(Message('A', 'B'),
             self.connection.recv(TEST_TIMEOUT.deadline()))
 
     def testReadMultipleLines(self, socketMock):
         self.connect(socketMock)
         self.socket.recv.return_value = b'A:B\r\nC\r\n'
 
-        self.assertEquals(Message('A', 'B'),
+        self.assertEqual(Message('A', 'B'),
             self.connection.recv(TEST_TIMEOUT.deadline()))
         self.socket.recv.reset_mock()
-        self.assertEquals(Message('C', ''),
+        self.assertEqual(Message('C', ''),
             self.connection.recv(TEST_TIMEOUT.deadline()))
 
     def testReadAtConnectionClosing(self, socketMock):
