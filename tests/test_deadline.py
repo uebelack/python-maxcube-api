@@ -32,14 +32,14 @@ class TestDeadline(TestCase):
     def testZeroDeadlineIsAlreadyExpired(self, timeMock):
         timeMock.side_effect = [0.0, 0.0]
         deadline = ZERO_TIMEOUT.deadline()
-        self.assertEquals('zero', deadline.fullname())
+        self.assertEqual('zero', deadline.fullname())
         self.assertTrue(deadline.is_expired())
 
     def testSubtimeoutHandling(self, timeMock):
         timeMock.side_effect = [0.0, 0.1, 0.2]
         deadline = ROOT_TIMEOUT.deadline()
         subdeadline = deadline.subtimeout(ONE_TIMEOUT)
-        self.assertEquals('root:one', subdeadline.fullname())
+        self.assertEqual('root:one', subdeadline.fullname())
         self.assertAlmostEqual(0.9, subdeadline.remaining())
 
     def testSubtimeoutHandlingWhenLargerThanTimeout(self, timeMock):
@@ -51,9 +51,9 @@ class TestDeadline(TestCase):
     def testToString(self, timeMock):
         timeMock.side_effect = [0.0, 0.1]
         deadline = ONE_TIMEOUT.deadline()
-        self.assertEquals('Deadline one will expire in 0.900 seconds', str(deadline))
+        self.assertEqual('Deadline one will expire in 0.900 seconds', str(deadline))
 
     def testToStringForExpiredDeadline(self, timeMock):
         timeMock.side_effect = [0.0, 1.1]
         deadline = ONE_TIMEOUT.deadline()
-        self.assertEquals('Deadline one expired 0.100 seconds ago', str(deadline))
+        self.assertEqual('Deadline one expired 0.100 seconds ago', str(deadline))
