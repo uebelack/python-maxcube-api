@@ -11,9 +11,8 @@ Basic usage:
 .. code:: python
 
     from maxcube.cube import MaxCube
-    from maxcube.connection import MaxCubeConnection
 
-    cube = MaxCube(MaxCubeConnection('192.168.0.20', 62910))
+    cube = MaxCube('192.168.0.20')
 
     for device in cube.devices:
         print(device.name)

@@ -27,12 +27,13 @@ UNKNOWN = "00"
 RF_FLAG_IS_ROOM = "04"
 RF_FLAG_IS_DEVICE = "00"
 RF_NULL_ADDRESS = "000000"
+DEFAULT_PORT = 62910
 DAYS = ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday',
         'friday', 'saturday', 'sunday']
 
 
 class MaxCube(MaxDevice):
-    def __init__(self, host: str, port: int):
+    def __init__(self, host: str, port: int = DEFAULT_PORT):
         super(MaxCube, self).__init__()
         self.__commander = Commander(host, port)
         self.name = 'Cube'
