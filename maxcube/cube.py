@@ -283,6 +283,8 @@ class MaxCube(MaxDevice):
             thermostat.mode = mode
             if temperature > 0:
                 thermostat.target_temperature = int(temperature * 2) / 2.0
+            elif mode == MAX_DEVICE_MODE_AUTOMATIC:
+                thermostat.target_temperature = thermostat.get_current_temp_in_auto_mode()
             return True
         return False
 

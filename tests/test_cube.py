@@ -1,3 +1,4 @@
+from time import strptime
 from typing import List
 from unittest import TestCase
 from unittest.mock import MagicMock, call, patch
@@ -15,6 +16,8 @@ from maxcube.device import \
     MAX_DEVICE_MODE_MANUAL, \
     MAX_DEVICE_MODE_BOOST
 from maxcube.room import MaxRoom
+
+import maxcube.thermostat
 
 def to_messages(lines):
     return [ Message.decode(line) for line in lines]
@@ -397,3 +400,16 @@ class TestMaxCube(TestCase):
                 {'until': '24:00', 'temp': 8}
             ]
         )
+
+    @patch('maxcube.thermostat.localtime')
+    def test_set_auto_mode_read_temp_from_program(self, localtime_mock, ClassMock):
+        localtime_mock.return_value = strptime("2012-10-22T05:30", "%Y-%m-%dT%H:%M")
+        print(localtime_mock.return_value)
+        self.init(ClassMock, INIT_RESPONSE_2)
+        device = self.cube.devices[0]
+        self.assertEqual(8.0, device.target_temperature)
+        self.cube.set_mode(device, MAX_DEVICE_MODE_AUTOMATIC)
+        self.assertEqual(21.0, device.target_temperature)
+        self.assertEqual(MAX_DEVICE_MODE_AUTOMATIC, device.mode)
+        self.commander.send_radio_msg.assert_called_once()
+        self.commander.send_radio_msg.assert_called_with('0004400000000E2EBA0100')
