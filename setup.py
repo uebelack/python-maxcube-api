@@ -7,7 +7,7 @@ with open('README.rst') as f:
 
 setup(
     name='maxcube-api',
-    version='0.4.0',
+    version='0.4.1',
     description='eQ-3/ELV MAX! Cube Python API',
     long_description=readme,
     author='David Uebelacker',
