@@ -11,3 +11,10 @@
      can block other applications to connect to the Max! Cube. You
      can call cube disconnect() method to release the connection
      manually.
+
+### Version 0.4.1
+ * Several minor changes:
+   - Allow to rollback to non-persistent connections to keep using original software for unsupported operations
+   - Serial number of the cube was not extracted from handshake
+   - When changing to auto mode, use weekly programme to fetch current temperature
+   - Make MAX! Cube TCP port optional
