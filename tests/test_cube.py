@@ -154,6 +154,13 @@ class TestMaxCube(TestCase):
         self.cube.disconnect()
         self.commander.disconnect.assert_called_once()
 
+    def test_use_persistent_connection(self, ClassMock):
+        self.init(ClassMock, INIT_RESPONSE_1)
+        self.commander.use_persistent_connection = True
+        self.assertTrue(self.cube.use_persistent_connection)
+        self.cube.use_persistent_connection = False
+        self.assertFalse(self.commander.use_persistent_connection)
+
     def test_is_thermostat(self, _):
         device = MaxDevice()
         device.type = MAX_CUBE

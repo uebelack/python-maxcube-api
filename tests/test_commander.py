@@ -14,6 +14,7 @@ S_CMD = Message('s', base64.b64encode(bytearray.fromhex(S_CMD_HEX)).decode('utf-
 S_CMD_SUCCESS = Message('S', '00,0,31')
 S_CMD_ERROR = Message('S', '100,1,31')
 S_CMD_THROTTLE_ERROR = Message('S', '100,1,0')
+Q_CMD = Message('q')
 
 TEST_TIMEOUT = Timeout('test', 1.0)
 
@@ -35,16 +36,17 @@ class TestCommander(TestCase):
         self.connection.recv.assert_not_called()
         self.connection.close.assert_not_called()
 
-    def testUpdateOpensNewConnectionIfDisconnected(self, ClassMock):
+    def testUpdateOpensNewNonPersistantConnectionAndClosesIt(self, ClassMock):
         messages = [Message('H'), Message('L')]
         self.init(ClassMock)
+        self.commander.use_persistent_connection = False
         self.connection.recv.side_effect = messages
 
         self.assertEqual(messages, self.commander.update())
 
-        self.connection.send.assert_not_called()
+        self.connection.send.assert_called_once_with(Q_CMD)
         self.assertEqual(2, self.connection.recv.call_count)
-        self.connection.close.assert_not_called()
+        self.connection.close.assert_called_once()
 
     def testUpdateSendsCommandAfterAfterTimeout(self, ClassMock):
         messages = [Message('H'), None]
@@ -77,6 +79,21 @@ class TestCommander(TestCase):
         self.connection.send.assert_called_once_with(S_CMD)
         self.assertEqual(2, self.connection.recv.call_count)
         self.connection.close.assert_not_called()
+
+    def testSendRadioMsgOpensNewNonPersistentConnectionAndClosesIt(self, ClassMock = None):
+        self.init(ClassMock)
+        self.commander.use_persistent_connection = False
+        self.connection.recv.side_effect = [
+            L_CMD_SUCCESS, # connection preambule
+            S_CMD_SUCCESS
+        ]
+
+        self.assertTrue(self.commander.send_radio_msg(S_CMD_HEX))
+        self.connection.send.assert_has_calls([
+            call(S_CMD), call(Q_CMD)
+        ])
+        self.assertEqual(2, self.connection.recv.call_count)
+        self.connection.close.assert_called_once()
 
     def testSendRadioMsgReusesConnection(self, ClassMock):
         self.testSendRadioMsgAutoconnects()

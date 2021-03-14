@@ -26,6 +26,7 @@ class Commander(object):
     def __init__(self, host: str, port: int):
         self.__host: str = host
         self.__port: int = port
+        self.use_persistent_connection = True
         self.__connection: Connection = None
         self.__unsolicited_messages: List[Message] = []
 
@@ -54,6 +55,8 @@ class Commander(object):
                 self.__connect(deadline)
         else:
             self.__connect(deadline)
+        if not self.use_persistent_connection:
+            self.disconnect()
         return self.get_unsolicited_messages()
 
     def send_radio_msg(self, hex_radio_msg: str) -> bool:
@@ -100,6 +103,10 @@ class Commander(object):
                 return self.__call(msg, deadline)
             else:
                 raise
+
+        finally:
+            if not self.use_persistent_connection:
+                self.disconnect()
 
     def __is_connected(self) -> bool:
         return self.__connection is not None

@@ -44,6 +44,14 @@ class MaxCube(MaxDevice):
         self.update()
         self.log()
 
+    @property
+    def use_persistent_connection(self) -> bool:
+        return self.__commander.use_persistent_connection
+
+    @use_persistent_connection.setter
+    def use_persistent_connection(self, value: bool) -> None:
+        self.__commander.use_persistent_connection = value
+
     def disconnect(self):
         self.__commander.disconnect()
 
