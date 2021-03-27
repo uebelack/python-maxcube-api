@@ -1,3 +1,5 @@
+from typing import Tuple
+
 MAX_CUBE = 0
 MAX_THERMOSTAT = 1
 MAX_THERMOSTAT_PLUS = 2
@@ -12,6 +14,13 @@ MAX_DEVICE_MODE_BOOST = 3
 
 MAX_DEVICE_BATTERY_OK = 0
 MAX_DEVICE_BATTERY_LOW = 1
+
+MODE_NAMES = {
+    MAX_DEVICE_MODE_AUTOMATIC: "auto",
+    MAX_DEVICE_MODE_MANUAL: "manual",
+    MAX_DEVICE_MODE_VACATION: "away",
+    MAX_DEVICE_MODE_BOOST: "boost",
+}
 
 
 class MaxDevice(object):
@@ -35,6 +44,15 @@ class MaxDevice(object):
 
     def is_room(self):
         return False
+
+    def describe(self, kind: str, *args: Tuple[str]):
+        state = "".join("," + s for s in args if s)
+        if self.battery == MAX_DEVICE_BATTERY_LOW:
+            state = ",LOW_BATT" + state
+        return f"{kind} sn={self.serial},rf={self.rf_address},name={self.name}" + state
+
+    def __str__(self):
+        return self.describe(str(self.type))
 
     def to_dict(self):
         data = {}
