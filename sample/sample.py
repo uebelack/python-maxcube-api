@@ -1,16 +1,14 @@
 from maxcube.cube import MaxCube
-from maxcube.device import \
-    MAX_THERMOSTAT, \
-    MAX_THERMOSTAT_PLUS, \
-    MAX_WINDOW_SHUTTER, \
-    MAX_WALL_THERMOSTAT, \
-    MAX_DEVICE_MODE_AUTOMATIC, \
-    MAX_DEVICE_MODE_MANUAL, \
-    MAX_DEVICE_MODE_VACATION, \
-    MAX_DEVICE_MODE_BOOST
-import logging
+from maxcube.device import (
+    MAX_DEVICE_MODE_AUTOMATIC,
+    MAX_DEVICE_MODE_MANUAL,
+    MAX_THERMOSTAT,
+    MAX_THERMOSTAT_PLUS,
+    MAX_WALL_THERMOSTAT,
+    MAX_WINDOW_SHUTTER,
+)
 
-cube = MaxCube('192.168.0.20', 62910)
+cube = MaxCube("192.168.0.20", 62910)
 
 print("Serial: %s" % (cube.serial))
 for room in cube.rooms:
@@ -79,4 +77,4 @@ for device in cube.devices:
         print("Setting mode")
         cube.set_mode(device, MAX_DEVICE_MODE_MANUAL)
     else:
-        print("No Wall Thermostat") 
+        print("No Wall Thermostat")

@@ -1,6 +1,7 @@
-
 from unittest import TestCase
+
 from maxcube.thermostat import MaxThermostat
+
 
 class TestMessage(TestCase):
     """ Test Max! thermostat """

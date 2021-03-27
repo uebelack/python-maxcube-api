@@ -1,95 +1,101 @@
 from time import strptime
 from typing import List
 from unittest import TestCase
-from unittest.mock import MagicMock, call, patch
-from maxcube.commander import Commander
-from maxcube.message import Message
+from unittest.mock import patch
+
 from maxcube.cube import MaxCube
-from maxcube.device import \
-    MaxDevice, \
-    MAX_CUBE, \
-    MAX_THERMOSTAT, \
-    MAX_THERMOSTAT_PLUS, \
-    MAX_WALL_THERMOSTAT, \
-    MAX_WINDOW_SHUTTER, \
-    MAX_DEVICE_MODE_AUTOMATIC, \
-    MAX_DEVICE_MODE_MANUAL, \
-    MAX_DEVICE_MODE_BOOST
+from maxcube.device import (
+    MAX_CUBE,
+    MAX_DEVICE_MODE_AUTOMATIC,
+    MAX_DEVICE_MODE_MANUAL,
+    MAX_THERMOSTAT,
+    MAX_THERMOSTAT_PLUS,
+    MAX_WALL_THERMOSTAT,
+    MAX_WINDOW_SHUTTER,
+    MaxDevice,
+)
+from maxcube.message import Message
 from maxcube.room import MaxRoom
 
-import maxcube.thermostat
 
 def to_messages(lines):
-    return [ Message.decode(line) for line in lines]
+    return [Message.decode(line) for line in lines]
 
-INIT_RESPONSE_1 = to_messages([
-    b'H:KEQ0566338,0b6475,0113,00000000,74b7b6f7,00,32,0f0c19,1527,03,0000',
-    b'M:00,01,VgIEAQdLaXRjaGVuBrxTAgZMaXZpbmcGvFoDCFNsZWVwaW5nCKuCBARXb3JrBrxcBAEGvFNLRVEwMzM2MTA4B0tpdGNoZW4BAQa8Wk' \
-    b'tFUTAzMzYxMDAGTGl2aW5nAgEIq4JLRVEwMzM1NjYyCFNsZWVwaW5nAwEGvFxLRVEwMzM2MTA0BFdvcmsEAQ==',
-    b'C:0b6475,7QtkdQATAf9LRVEwNTY2MzM4AQsABEAAAAAAAAAAAP///////////////////////////wsABEAAAAAAAAAAQf////////////////' \
-    b'///////////2h0dHA6Ly93d3cubWF4LXBvcnRhbC5lbHYuZGU6ODAvY3ViZQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' \
-    b'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAENFVAAACgADAAAOEENFU1QAAwACAAAcIA==',
-    b'C:06bc53,0ga8UwEBGP9LRVEwMzM2MTA4KCEyCQcYAzAM/wBESFUIRSBFIEUgRSBFIEUgRSBFIEUgRSBFIERIVQhFIEUgRSBFIEUgRSBFIEUgRS' \
-    b'BFIEUgREhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIERIVGxEzFUURSBFIEUgRSBFIEUgRSBFIEUgR' \
-    b'EhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIA==',
-    b'C:06bc5a,0ga8WgECGP9LRVEwMzM2MTAwKCEyCQcYAzAM/wBESFUIRSBFIEUgRSBFIEUgRSBFIEUgRSBFIERIVQhFIEUgRSBFIEUgRSBFIEUgRS' \
-    b'BFIEUgREhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIERIVGxEzFUURSBFIEUgRSBFIEUgRSBFIEUgR' \
-    b'EhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIA==',
-    b'C:06bc5c,0ga8XAEEGP9LRVEwMzM2MTA0KCEyCQcYAzAM/wBESFUIRSBFIEUgRSBFIEUgRSBFIEUgRSBFIERIVQhFIEUgRSBFIEUgRSBFIEUgR' \
-    b'SBFIEUgREhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIERIVGxEzFUURSBFIEUgRSBFIEUgRSBFIEU' \
-    b'gREhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIA==',
-    b'C:08ab82,0girggEDGP9LRVEwMzM1NjYyKCEyCQcYAzAM/wBEYFRsRMxFFEUgRSBFIEUgRSBFIEUgRSBFIERgVGxEzEUURSBFIEUgRSBFIEUgR' \
-    b'SBFIEUgRGBUbETMRRRFIEUgRSBFIEUgRSBFIEUgRSBEYFRsRMxFFEUgRSBFIEUgRSBFIEUgRSBFIERgVGxEzEUURSBFIEUgRSBFIEUgRSBFIEU' \
-    b'gRGBUbETMRRRFIEUgRSBFIEUgRSBFIEUgRSBEYFRsRMxFFEUgRSBFIEUgRSBFIEUgRSBFIA==',
-    b'L:Cwa8U/EaGBsqAOwACwa8WgkSGCMqAOcACwa8XAkSGAsqAOcACwirggMaGAAiAAAA'
-])
 
-INIT_RESPONSE_2 = to_messages([
-    b'H:JEQ0341267,015d2a,0113,00000000,0336f10a,4b,29,110203,172a,03,0000',
-    b'M:00,01,VgICAQpCYWRlemltbWVyDi66AgpXb2huemltbWVyAAAAAwEOLrpLRVExMDg2NDM3ClRoZXJtb3N0YXQBAwoIgUtFUTA2NTU3NDMOV2' \
-    b'FuZHRoZXJtb3N0YXQCBAyisktFUTA4Mzk3NzgORmVuc3RlcmtvbnRha3QBAQ==',
-    b'C:015d2a,7QFdKgATAf9KRVEwMzQxMjY3AQsABEAAAAAAAAAAAP///////////////////////////wsABEAAAAAAAAAAQf///////////////' \
-    b'////////////2h0dHA6Ly9tYXguZXEtMy5kZTo4MC9jdWJlADAvbG9va3VwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' \
-    b'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAENFVAAACgADAAAOEENFU1QAAwACAAAcIA==',
-    b'C:0a0881,zgoIgQMCEP9LRVEwNjU1NzQzKyE9CURIVQhFIEUgRSBFIEUgRSBFIEUgRSBFIEUgREhVCEUgRSBFIEUgRSBFIEUgRSBFIEUgRSBES' \
-    b'FRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIERIVGxEzFUURSBFIEUgRSBFIEUgRSBFIEUgREhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMx' \
-    b'VFEUgRSBFIEUgRSBFIEUgRSBFIERIVGxEzFUURSBFIEUgRSBFIEUgRSBFIEUgBxgw',
-    b'C:0ca2b2,EQyisgQBFA9LRVEwODM5Nzc4',
-    b'C:0e2eba,0g4uugEBEKBLRVExMDg2NDM3KyE9CQcYAzAM/wAgYFR4ISAhICEgISAhIEUgRSBFIEUgRSBFICBgVHghICEgISAhICEgRSBFIEUgR' \
-    b'SBFIEUgIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFICBCVE4hHyEgISAhICEgRSBFIEUgRSBFIEU' \
-    b'gIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFIA==',
-    b'L:DAoIgewSGAQQAAAA5QYMorL3EhALDi66ChIYABAAAAA='
-])
+INIT_RESPONSE_1 = to_messages(
+    [
+        b"H:KEQ0566338,0b6475,0113,00000000,74b7b6f7,00,32,0f0c19,1527,03,0000",
+        b"M:00,01,VgIEAQdLaXRjaGVuBrxTAgZMaXZpbmcGvFoDCFNsZWVwaW5nCKuCBARXb3JrBrxcBAEGvFNLRVEwMzM2MTA4B0tpdGNoZW4BAQa8Wk"
+        b"tFUTAzMzYxMDAGTGl2aW5nAgEIq4JLRVEwMzM1NjYyCFNsZWVwaW5nAwEGvFxLRVEwMzM2MTA0BFdvcmsEAQ==",
+        b"C:0b6475,7QtkdQATAf9LRVEwNTY2MzM4AQsABEAAAAAAAAAAAP///////////////////////////wsABEAAAAAAAAAAQf////////////////"
+        b"///////////2h0dHA6Ly93d3cubWF4LXBvcnRhbC5lbHYuZGU6ODAvY3ViZQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAENFVAAACgADAAAOEENFU1QAAwACAAAcIA==",
+        b"C:06bc53,0ga8UwEBGP9LRVEwMzM2MTA4KCEyCQcYAzAM/wBESFUIRSBFIEUgRSBFIEUgRSBFIEUgRSBFIERIVQhFIEUgRSBFIEUgRSBFIEUgRS"
+        b"BFIEUgREhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIERIVGxEzFUURSBFIEUgRSBFIEUgRSBFIEUgR"
+        b"EhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIA==",
+        b"C:06bc5a,0ga8WgECGP9LRVEwMzM2MTAwKCEyCQcYAzAM/wBESFUIRSBFIEUgRSBFIEUgRSBFIEUgRSBFIERIVQhFIEUgRSBFIEUgRSBFIEUgRS"
+        b"BFIEUgREhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIERIVGxEzFUURSBFIEUgRSBFIEUgRSBFIEUgR"
+        b"EhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIA==",
+        b"C:06bc5c,0ga8XAEEGP9LRVEwMzM2MTA0KCEyCQcYAzAM/wBESFUIRSBFIEUgRSBFIEUgRSBFIEUgRSBFIERIVQhFIEUgRSBFIEUgRSBFIEUgR"
+        b"SBFIEUgREhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIERIVGxEzFUURSBFIEUgRSBFIEUgRSBFIEU"
+        b"gREhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIA==",
+        b"C:08ab82,0girggEDGP9LRVEwMzM1NjYyKCEyCQcYAzAM/wBEYFRsRMxFFEUgRSBFIEUgRSBFIEUgRSBFIERgVGxEzEUURSBFIEUgRSBFIEUgR"
+        b"SBFIEUgRGBUbETMRRRFIEUgRSBFIEUgRSBFIEUgRSBEYFRsRMxFFEUgRSBFIEUgRSBFIEUgRSBFIERgVGxEzEUURSBFIEUgRSBFIEUgRSBFIEU"
+        b"gRGBUbETMRRRFIEUgRSBFIEUgRSBFIEUgRSBEYFRsRMxFFEUgRSBFIEUgRSBFIEUgRSBFIA==",
+        b"L:Cwa8U/EaGBsqAOwACwa8WgkSGCMqAOcACwa8XAkSGAsqAOcACwirggMaGAAiAAAA",
+    ]
+)
 
-LAST_STATE_MSG = Message.decode(b'L:Cwa8U/ESGAAiAAAACwa8WgkSGAAiAAAACwa8XAkSGAUiAAAACwirggMSGAUiAAAA')
+INIT_RESPONSE_2 = to_messages(
+    [
+        b"H:JEQ0341267,015d2a,0113,00000000,0336f10a,4b,29,110203,172a,03,0000",
+        b"M:00,01,VgICAQpCYWRlemltbWVyDi66AgpXb2huemltbWVyAAAAAwEOLrpLRVExMDg2NDM3ClRoZXJtb3N0YXQBAwoIgUtFUTA2NTU3NDMOV2"
+        b"FuZHRoZXJtb3N0YXQCBAyisktFUTA4Mzk3NzgORmVuc3RlcmtvbnRha3QBAQ==",
+        b"C:015d2a,7QFdKgATAf9KRVEwMzQxMjY3AQsABEAAAAAAAAAAAP///////////////////////////wsABEAAAAAAAAAAQf///////////////"
+        b"////////////2h0dHA6Ly9tYXguZXEtMy5kZTo4MC9jdWJlADAvbG9va3VwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAENFVAAACgADAAAOEENFU1QAAwACAAAcIA==",
+        b"C:0a0881,zgoIgQMCEP9LRVEwNjU1NzQzKyE9CURIVQhFIEUgRSBFIEUgRSBFIEUgRSBFIEUgREhVCEUgRSBFIEUgRSBFIEUgRSBFIEUgRSBES"
+        b"FRsRMxVFEUgRSBFIEUgRSBFIEUgRSBFIERIVGxEzFUURSBFIEUgRSBFIEUgRSBFIEUgREhUbETMVRRFIEUgRSBFIEUgRSBFIEUgRSBESFRsRMx"
+        b"VFEUgRSBFIEUgRSBFIEUgRSBFIERIVGxEzFUURSBFIEUgRSBFIEUgRSBFIEUgBxgw",
+        b"C:0ca2b2,EQyisgQBFA9LRVEwODM5Nzc4",
+        b"C:0e2eba,0g4uugEBEKBLRVExMDg2NDM3KyE9CQcYAzAM/wAgYFR4ISAhICEgISAhIEUgRSBFIEUgRSBFICBgVHghICEgISAhICEgRSBFIEUgR"
+        b"SBFIEUgIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFICBCVE4hHyEgISAhICEgRSBFIEUgRSBFIEU"
+        b"gIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFIA==",
+        b"L:DAoIgewSGAQQAAAA5QYMorL3EhALDi66ChIYABAAAAA=",
+    ]
+)
 
-SEND_CMD_OK_RESPONSE = 'S:04,0,31'
+LAST_STATE_MSG = Message.decode(
+    b"L:Cwa8U/ESGAAiAAAACwa8WgkSGAAiAAAACwa8XAkSGAUiAAAACwirggMSGAUiAAAA"
+)
+
+SEND_CMD_OK_RESPONSE = "S:04,0,31"
 
 WORKDAY_PROGRAMME_1 = [
-    {'until': '05:30', 'temp': 8},
-    {'until': '06:30', 'temp': 21},
-    {'until': '23:55', 'temp': 8},
-    {'until': '24:00', 'temp': 8}
+    {"until": "05:30", "temp": 8},
+    {"until": "06:30", "temp": 21},
+    {"until": "23:55", "temp": 8},
+    {"until": "24:00", "temp": 8},
 ]
 
 WEEKEND_PROGRAME_1 = [
-    {'until': '08:00', 'temp': 8},
-    {'until': '10:00', 'temp': 21},
-    {'until': '24:00', 'temp': 8}
+    {"until": "08:00", "temp": 8},
+    {"until": "10:00", "temp": 21},
+    {"until": "24:00", "temp": 8},
 ]
 
 INIT_PROGRAMME_1 = {
-    'monday': WORKDAY_PROGRAMME_1,
-    'tuesday': WORKDAY_PROGRAMME_1,
-    'wednesday': WORKDAY_PROGRAMME_1,
-    'thursday': WORKDAY_PROGRAMME_1,
-    'friday': WORKDAY_PROGRAMME_1,
-    'saturday': WEEKEND_PROGRAME_1,
-    'sunday': WEEKEND_PROGRAME_1
+    "monday": WORKDAY_PROGRAMME_1,
+    "tuesday": WORKDAY_PROGRAMME_1,
+    "wednesday": WORKDAY_PROGRAMME_1,
+    "thursday": WORKDAY_PROGRAMME_1,
+    "friday": WORKDAY_PROGRAMME_1,
+    "saturday": WEEKEND_PROGRAME_1,
+    "sunday": WEEKEND_PROGRAME_1,
 }
 
 
-@patch('maxcube.cube.Commander', spec=True)
+@patch("maxcube.cube.Commander", spec=True)
 class TestMaxCube(TestCase):
     """ Test the Max! Cube. """
 
@@ -97,7 +103,7 @@ class TestMaxCube(TestCase):
         self.commander = ClassMock.return_value
         self.commander.update.return_value = responses
 
-        self.cube = MaxCube('host', 1234)
+        self.cube = MaxCube("host", 1234)
 
         self.commander.update.assert_called_once()
         self.commander.update.reset_mock()
@@ -105,29 +111,29 @@ class TestMaxCube(TestCase):
 
     def test_init(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_1)
-        self.assertEqual('KEQ0566338', self.cube.serial)
-        self.assertEqual('0b6475', self.cube.rf_address)
-        self.assertEqual('Cube', self.cube.name)
-        self.assertEqual('01.13', self.cube.firmware_version)
+        self.assertEqual("KEQ0566338", self.cube.serial)
+        self.assertEqual("0b6475", self.cube.rf_address)
+        self.assertEqual("Cube", self.cube.name)
+        self.assertEqual("01.13", self.cube.firmware_version)
         self.assertEqual(4, len(self.cube.devices))
 
         device = self.cube.devices[0]
         self.assertEqual(4.5, device.min_temperature)
         self.assertEqual(25.0, device.max_temperature)
-        self.assertEqual('06BC53', device.rf_address)
-        self.assertEqual('Kitchen', device.name)
+        self.assertEqual("06BC53", device.rf_address)
+        self.assertEqual("Kitchen", device.name)
 
-        self.assertEqual('06BC5A', self.cube.devices[1].rf_address)
-        self.assertEqual('Living', self.cube.devices[1].name)
+        self.assertEqual("06BC5A", self.cube.devices[1].rf_address)
+        self.assertEqual("Living", self.cube.devices[1].name)
 
-        self.assertEqual('08AB82', self.cube.devices[2].rf_address)
-        self.assertEqual('Sleeping', self.cube.devices[2].name)
+        self.assertEqual("08AB82", self.cube.devices[2].rf_address)
+        self.assertEqual("Sleeping", self.cube.devices[2].name)
 
-        self.assertEqual('06BC5C', self.cube.devices[3].rf_address)
-        self.assertEqual('Work', self.cube.devices[3].name)
+        self.assertEqual("06BC5C", self.cube.devices[3].rf_address)
+        self.assertEqual("Work", self.cube.devices[3].name)
 
     def __update(self, responses: List[Message]):
-        self.commander.update.return_value=responses
+        self.commander.update.return_value = responses
         self.cube.update()
         self.commander.update.assert_called_once()
 
@@ -142,7 +148,13 @@ class TestMaxCube(TestCase):
 
     def test_parse_manual_l_message(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_1)
-        self.__update([Message.decode(b'L:Cwa8U/ESGQkhALMACwa8WgkSGQAhAMAACwa8XAkSGQUhALIACwirggMSGQUhAAAA')])
+        self.__update(
+            [
+                Message.decode(
+                    b"L:Cwa8U/ESGQkhALMACwa8WgkSGQAhAMAACwa8XAkSGQUhALIACwirggMSGQUhAAAA"
+                )
+            ]
+        )
 
         device = self.cube.devices[0]
         self.assertEqual(MAX_DEVICE_MODE_MANUAL, device.mode)
@@ -207,7 +219,7 @@ class TestMaxCube(TestCase):
 
         self.assertEqual(24.5, self.cube.devices[0].target_temperature)
         self.commander.send_radio_msg.assert_called_once()
-        self.commander.send_radio_msg.assert_called_with('00044000000006BC530131')
+        self.commander.send_radio_msg.assert_called_with("00044000000006BC530131")
 
     def test_do_not_update_if_set_target_temperature_fails(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_1)
@@ -217,7 +229,7 @@ class TestMaxCube(TestCase):
 
         self.assertEqual(21, self.cube.devices[0].target_temperature)
         self.commander.send_radio_msg.assert_called_once()
-        self.commander.send_radio_msg.assert_called_with('00044000000006BC530131')
+        self.commander.send_radio_msg.assert_called_with("00044000000006BC530131")
 
     def test_set_target_temperature_should_round_temperature(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_1)
@@ -226,7 +238,7 @@ class TestMaxCube(TestCase):
 
         self.assertEqual(24.5, self.cube.devices[0].target_temperature)
         self.commander.send_radio_msg.assert_called_once()
-        self.commander.send_radio_msg.assert_called_with('00044000000006BC530131')
+        self.commander.send_radio_msg.assert_called_with("00044000000006BC530131")
 
     def test_set_target_temperature_is_ignored_by_windowshutter(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)
@@ -241,14 +253,14 @@ class TestMaxCube(TestCase):
 
         self.assertEqual(MAX_DEVICE_MODE_MANUAL, device.mode)
         self.commander.send_radio_msg.assert_called_once()
-        self.commander.send_radio_msg.assert_called_with('00044000000006BC53016A')
+        self.commander.send_radio_msg.assert_called_with("00044000000006BC53016A")
 
     def test_init_2(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)
-        self.assertEqual('JEQ0341267', self.cube.serial)
-        self.assertEqual('015d2a', self.cube.rf_address)
-        self.assertEqual('Cube', self.cube.name)
-        self.assertEqual('01.13', self.cube.firmware_version)
+        self.assertEqual("JEQ0341267", self.cube.serial)
+        self.assertEqual("015d2a", self.cube.rf_address)
+        self.assertEqual("Cube", self.cube.name)
+        self.assertEqual("01.13", self.cube.firmware_version)
         self.assertEqual(3, len(self.cube.devices))
 
         device = self.cube.devices[0]
@@ -279,35 +291,39 @@ class TestMaxCube(TestCase):
 
     def test_parse_m_message(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)
-        self.__update([Message.decode(
-            b'M:00,01,VgIEAQdLaXRjaGVuBrxTAgZMaXZpbmcGvFoDCFNsZWVwaW5nCKuCBARXb3JrBrxcBAEGvF' \
-            b'NLRVEwMzM2MTA4B0tpdGNoZW4BAQa8WktFUTAzMzYxMDAGTGl2aW5nAgEIq4JLRVEwMzM1NjYyCFNs' \
-            b'ZWVwaW5nAwEGvFxLRVEwMzM2MTA0BFdvcmsEAQ=='),
-            INIT_RESPONSE_2[-1]
-        ])
+        self.__update(
+            [
+                Message.decode(
+                    b"M:00,01,VgIEAQdLaXRjaGVuBrxTAgZMaXZpbmcGvFoDCFNsZWVwaW5nCKuCBARXb3JrBrxcBAEGvF"
+                    b"NLRVEwMzM2MTA4B0tpdGNoZW4BAQa8WktFUTAzMzYxMDAGTGl2aW5nAgEIq4JLRVEwMzM1NjYyCFNs"
+                    b"ZWVwaW5nAwEGvFxLRVEwMzM2MTA0BFdvcmsEAQ=="
+                ),
+                INIT_RESPONSE_2[-1],
+            ]
+        )
 
-        self.assertEqual('0E2EBA', self.cube.devices[0].rf_address)
-        self.assertEqual('Thermostat', self.cube.devices[0].name)
+        self.assertEqual("0E2EBA", self.cube.devices[0].rf_address)
+        self.assertEqual("Thermostat", self.cube.devices[0].name)
         self.assertEqual(MAX_THERMOSTAT, self.cube.devices[0].type)
-        self.assertEqual('KEQ1086437', self.cube.devices[0].serial)
+        self.assertEqual("KEQ1086437", self.cube.devices[0].serial)
         self.assertEqual(1, self.cube.devices[0].room_id)
 
-        self.assertEqual('0A0881', self.cube.devices[1].rf_address)
-        self.assertEqual('Wandthermostat', self.cube.devices[1].name)
+        self.assertEqual("0A0881", self.cube.devices[1].rf_address)
+        self.assertEqual("Wandthermostat", self.cube.devices[1].name)
         self.assertEqual(MAX_WALL_THERMOSTAT, self.cube.devices[1].type)
-        self.assertEqual('KEQ0655743', self.cube.devices[1].serial)
+        self.assertEqual("KEQ0655743", self.cube.devices[1].serial)
         self.assertEqual(2, self.cube.devices[1].room_id)
 
-        self.assertEqual('0CA2B2', self.cube.devices[2].rf_address)
-        self.assertEqual('Fensterkontakt', self.cube.devices[2].name)
+        self.assertEqual("0CA2B2", self.cube.devices[2].rf_address)
+        self.assertEqual("Fensterkontakt", self.cube.devices[2].name)
         self.assertEqual(MAX_WINDOW_SHUTTER, self.cube.devices[2].type)
-        self.assertEqual('KEQ0839778', self.cube.devices[2].serial)
+        self.assertEqual("KEQ0839778", self.cube.devices[2].serial)
         self.assertEqual(1, self.cube.devices[2].room_id)
 
-        self.assertEqual('Kitchen', self.cube.rooms[0].name)
+        self.assertEqual("Kitchen", self.cube.rooms[0].name)
         self.assertEqual(1, self.cube.rooms[0].id)
 
-        self.assertEqual('Living', self.cube.rooms[1].name)
+        self.assertEqual("Living", self.cube.rooms[1].name)
         self.assertEqual(2, self.cube.rooms[1].id)
 
     def test_get_devices(self, ClassMock):
@@ -317,17 +333,17 @@ class TestMaxCube(TestCase):
 
     def test_device_by_rf(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)
-        device = self.cube.device_by_rf('0CA2B2')
+        device = self.cube.device_by_rf("0CA2B2")
 
-        self.assertEqual('0CA2B2', device.rf_address)
-        self.assertEqual('Fensterkontakt', device.name)
+        self.assertEqual("0CA2B2", device.rf_address)
+        self.assertEqual("Fensterkontakt", device.name)
         self.assertEqual(MAX_WINDOW_SHUTTER, device.type)
-        self.assertEqual('KEQ0839778', device.serial)
+        self.assertEqual("KEQ0839778", device.serial)
         self.assertEqual(1, device.room_id)
 
     def test_device_by_rf_negative(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)
-        device = self.cube.device_by_rf('DEADBEEF')
+        device = self.cube.device_by_rf("DEADBEEF")
 
         self.assertIsNone(device)
 
@@ -349,17 +365,17 @@ class TestMaxCube(TestCase):
         self.init(ClassMock, INIT_RESPONSE_2)
         rooms = self.cube.get_rooms()
 
-        self.assertEqual('Badezimmer', rooms[0].name)
+        self.assertEqual("Badezimmer", rooms[0].name)
         self.assertEqual(1, rooms[0].id)
 
-        self.assertEqual('Wohnzimmer', rooms[1].name)
+        self.assertEqual("Wohnzimmer", rooms[1].name)
         self.assertEqual(2, rooms[1].id)
 
     def test_room_by_id(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)
         room = self.cube.room_by_id(1)
 
-        self.assertEqual('Badezimmer', room.name)
+        self.assertEqual("Badezimmer", room.name)
         self.assertEqual(1, room.id)
 
     def test_room_by_id_negative(self, ClassMock):
@@ -370,25 +386,23 @@ class TestMaxCube(TestCase):
 
     def test_set_programme(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)
-        self.commander.send_radio_msg.return_value=True
+        self.commander.send_radio_msg.return_value = True
         result = self.cube.set_programme(
             self.cube.devices[0],
             "saturday",
-            [
-                {'temp': 20.5, 'until': '13:30'},
-                {'temp': 18, 'until': '24:00'}
-            ]
+            [{"temp": 20.5, "until": "13:30"}, {"temp": 18, "until": "24:00"}],
         )
         self.assertTrue(result)
         self.commander.send_radio_msg.assert_called_once()
-        self.commander.send_radio_msg.assert_called_with('0000100000000E2EBA010052A249200000000000')
+        self.commander.send_radio_msg.assert_called_with(
+            "0000100000000E2EBA010052A249200000000000"
+        )
 
     def test_set_programme_already_existing_does_nothing(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)
         result = self.cube.set_programme(
-            self.cube.devices[0],
-            'saturday',
-            INIT_PROGRAMME_1['saturday'])
+            self.cube.devices[0], "saturday", INIT_PROGRAMME_1["saturday"]
+        )
         self.assertIsNone(result)
         self.commander.send_radio_msg.assert_not_called()
 
@@ -396,19 +410,19 @@ class TestMaxCube(TestCase):
         self.init(ClassMock, INIT_RESPONSE_2)
         device = self.cube.devices[0]
         result = device.to_dict()
-        self.assertEqual(result['name'], 'Thermostat')
-        self.assertEqual(result['comfort_temperature'], 21.5)
+        self.assertEqual(result["name"], "Thermostat")
+        self.assertEqual(result["comfort_temperature"], 21.5)
         self.assertEqual(
-            result['programme']['monday'],
+            result["programme"]["monday"],
             [
-                {'until': '05:30', 'temp': 8},
-                {'until': '06:30', 'temp': 21},
-                {'until': '23:55', 'temp': 8},
-                {'until': '24:00', 'temp': 8}
-            ]
+                {"until": "05:30", "temp": 8},
+                {"until": "06:30", "temp": 21},
+                {"until": "23:55", "temp": 8},
+                {"until": "24:00", "temp": 8},
+            ],
         )
 
-    @patch('maxcube.thermostat.localtime')
+    @patch("maxcube.thermostat.localtime")
     def test_set_auto_mode_read_temp_from_program(self, localtime_mock, ClassMock):
         localtime_mock.return_value = strptime("2012-10-22T05:30", "%Y-%m-%dT%H:%M")
         print(localtime_mock.return_value)
@@ -419,4 +433,4 @@ class TestMaxCube(TestCase):
         self.assertEqual(21.0, device.target_temperature)
         self.assertEqual(MAX_DEVICE_MODE_AUTOMATIC, device.mode)
         self.commander.send_radio_msg.assert_called_once()
-        self.commander.send_radio_msg.assert_called_with('0004400000000E2EBA0100')
+        self.commander.send_radio_msg.assert_called_with("0004400000000E2EBA0100")
