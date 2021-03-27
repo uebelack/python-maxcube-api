@@ -1,7 +1,5 @@
 import base64
 import logging
-import socket
-
 from time import sleep
 from typing import List
 
@@ -11,15 +9,15 @@ from .message import Message
 
 logger = logging.getLogger(__name__)
 
-QUIT_MSG = Message('q')
-L_MSG = Message('l')
+QUIT_MSG = Message("q")
+L_MSG = Message("l")
 L_REPLY_CMD = L_MSG.reply_cmd()
 
-UPDATE_TIMEOUT = Timeout('update', 3.0)
-CONNECT_TIMEOUT = Timeout('connect', 3.0)
-FLUSH_INPUT_TIMEOUT = Timeout('flush-input', 0)
-SEND_RADIO_MSG_TIMEOUT = Timeout('send-radio-msg', 30.0)
-CMD_REPLY_TIMEOUT = Timeout('cmd-reply', 2.0)
+UPDATE_TIMEOUT = Timeout("update", 3.0)
+CONNECT_TIMEOUT = Timeout("connect", 3.0)
+FLUSH_INPUT_TIMEOUT = Timeout("flush-input", 0)
+SEND_RADIO_MSG_TIMEOUT = Timeout("send-radio-msg", 30.0)
+CMD_REPLY_TIMEOUT = Timeout("cmd-reply", 2.0)
 
 
 class Commander(object):
@@ -34,8 +32,10 @@ class Commander(object):
         if self.__connection:
             try:
                 self.__connection.send(QUIT_MSG)
-            except:
-                logger.debug('Unable to properly shutdown MAX Cube connection. Resetting it...')
+            except Exception:
+                logger.debug(
+                    "Unable to properly shutdown MAX Cube connection. Resetting it..."
+                )
             finally:
                 self.__close()
 
@@ -51,7 +51,7 @@ class Commander(object):
                 response = self.__call(L_MSG, deadline)
                 if response:
                     self.__unsolicited_messages.append(response)
-            except:
+            except Exception:
                 self.__connect(deadline)
         else:
             self.__connect(deadline)
@@ -61,7 +61,9 @@ class Commander(object):
 
     def send_radio_msg(self, hex_radio_msg: str) -> bool:
         deadline = SEND_RADIO_MSG_TIMEOUT.deadline()
-        request = Message('s', base64.b64encode(bytearray.fromhex(hex_radio_msg)).decode('utf-8'))
+        request = Message(
+            "s", base64.b64encode(bytearray.fromhex(hex_radio_msg)).decode("utf-8")
+        )
         while not deadline.is_expired():
             if self.__cmd_send_radio_msg(request, deadline):
                 return True
@@ -70,15 +72,17 @@ class Commander(object):
     def __cmd_send_radio_msg(self, request: Message, deadline: Deadline) -> bool:
         try:
             response = self.__call(request, deadline)
-            duty_cycle, status_code, free_slots = response.arg.split(',', 3)
+            duty_cycle, status_code, free_slots = response.arg.split(",", 3)
             if int(status_code) == 0:
                 return True
-            logger.debug('Radio message %s was not send [DutyCycle:%s, StatusCode:%s, FreeSlots:%s]' %
-                (request, duty_cycle, status_code, free_slots))
+            logger.debug(
+                "Radio message %s was not send [DutyCycle:%s, StatusCode:%s, FreeSlots:%s]"
+                % (request, duty_cycle, status_code, free_slots)
+            )
             if int(duty_cycle) == 100 and int(free_slots) == 0:
                 sleep(deadline.remaining(upper_bound=10.0))
         except Exception as ex:
-            logger.error('Error sending radio message to Max! Cube: ' + str(ex))
+            logger.error("Error sending radio message to Max! Cube: " + str(ex))
         return False
 
     def __call(self, msg: Message, deadline: Deadline) -> Message:
@@ -97,7 +101,7 @@ class Commander(object):
                 raise TimeoutError(str(subdeadline))
             return result
 
-        except:
+        except Exception:
             self.__close()
             if already_connected:
                 return self.__call(msg, deadline)
@@ -114,7 +118,9 @@ class Commander(object):
     def __connect(self, deadline: Deadline):
         self.__unsolicited_messages = []
         self.__connection = Connection(self.__host, self.__port)
-        reply = self.__wait_for_reply(L_REPLY_CMD, deadline.subtimeout(CMD_REPLY_TIMEOUT))
+        reply = self.__wait_for_reply(
+            L_REPLY_CMD, deadline.subtimeout(CMD_REPLY_TIMEOUT)
+        )
         if reply:
             self.__unsolicited_messages.append(reply)
 
