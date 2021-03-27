@@ -6,6 +6,7 @@ from unittest.mock import patch
 from maxcube.cube import MaxCube
 from maxcube.device import (
     MAX_CUBE,
+    MAX_DEVICE_BATTERY_LOW,
     MAX_DEVICE_MODE_AUTOMATIC,
     MAX_DEVICE_MODE_MANUAL,
     MAX_THERMOSTAT,
@@ -61,7 +62,7 @@ INIT_RESPONSE_2 = to_messages(
         b"C:0e2eba,0g4uugEBEKBLRVExMDg2NDM3KyE9CQcYAzAM/wAgYFR4ISAhICEgISAhIEUgRSBFIEUgRSBFICBgVHghICEgISAhICEgRSBFIEUgR"
         b"SBFIEUgIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFICBCVE4hHyEgISAhICEgRSBFIEUgRSBFIEU"
         b"gIEJUTiEfISAhICEgISBFIEUgRSBFIEUgRSAgQlROIR8hICEgISAhIEUgRSBFIEUgRSBFIA==",
-        b"L:DAoIgewSGAQQAAAA5QYMorL3EhALDi66ChIYABAAAAA=",
+        b"L:DAoIgewSGAQQAAAA5QYMorL3EpALDi66ChIYABAAAAA=",
     ]
 )
 
@@ -288,6 +289,7 @@ class TestMaxCube(TestCase):
 
         device = self.cube.devices[2]
         self.assertFalse(device.is_open)
+        self.assertTrue(device.battery == MAX_DEVICE_BATTERY_LOW)
 
     def test_parse_m_message(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)

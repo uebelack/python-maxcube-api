@@ -64,55 +64,15 @@ class MaxCube(MaxDevice):
     def disconnect(self):
         self.__commander.disconnect()
 
+    def __str__(self):
+        return self.describe("CUBE", f"firmware={self.firmware_version}")
+
     def log(self):
-        logger.info(
-            "Cube (rf=%s, firmware=%s)" % (self.rf_address, self.firmware_version)
-        )
-        for device in self.devices:
-            if device.is_thermostat():
-                logger.info(
-                    "Thermostat (type=%s, rf=%s, room=%s, name=%s, mode=%s, min=%s, max=%s, actual=%s, target=%s, valve=%s)"
-                    % (
-                        device.type,
-                        device.rf_address,
-                        self.room_by_id(device.room_id).name,
-                        device.name,
-                        device.mode,
-                        device.min_temperature,
-                        device.max_temperature,
-                        device.actual_temperature,
-                        device.target_temperature,
-                        device.valve_position,
-                    )
-                )
-            elif device.is_wallthermostat():
-                logger.info(
-                    "WallThermostat (type=%s, rf=%s, room=%s, name=%s, min=%s, max=%s, actual=%s, target=%s)"
-                    % (
-                        device.type,
-                        device.rf_address,
-                        self.room_by_id(device.room_id).name,
-                        device.name,
-                        device.min_temperature,
-                        device.max_temperature,
-                        device.actual_temperature,
-                        device.target_temperature,
-                    )
-                )
-            elif device.is_windowshutter():
-                logger.info(
-                    "WindowShutter (type=%s, rf=%s, room=%s, name=%s, init=%s, open=%s)"
-                    % (
-                        device.type,
-                        device.rf_address,
-                        self.room_by_id(device.room_id).name,
-                        device.name,
-                        device.initialized,
-                        device.is_open,
-                    )
-                )
-            else:
-                logger.info("Device (rf=%s, name=%s" % (device.rf_address, device.name))
+        logger.info(str(self))
+        for room in self.rooms:
+            logger.info(f" * ROOM {room.name}")
+            for device in self.devices_by_room(room):
+                logger.info(" --- " + str(device))
 
     def update(self):
         self.__parse_responses(self.__commander.update())
