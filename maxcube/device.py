@@ -1,6 +1,3 @@
-import json
-
-
 MAX_CUBE = 0
 MAX_THERMOSTAT = 1
 MAX_THERMOSTAT_PLUS = 2
@@ -41,11 +38,24 @@ class MaxDevice(object):
 
     def to_dict(self):
         data = {}
-        keys = ['type', 'rf_address', 'room_id', 'name', 'serial', 'battery',
-                'comfort_temperature', 'eco_temperature', 'max_temperature',
-                'min_temperature', 'valve_position', 'target_temperature',
-                'actual_temperature', 'mode', 'programme']
+        keys = [
+            "type",
+            "rf_address",
+            "room_id",
+            "name",
+            "serial",
+            "battery",
+            "comfort_temperature",
+            "eco_temperature",
+            "max_temperature",
+            "min_temperature",
+            "valve_position",
+            "target_temperature",
+            "actual_temperature",
+            "mode",
+            "programme",
+        ]
         for key in keys:
             data[key] = getattr(self, key, None)
-        data['rf_address'] = self.rf_address
+        data["rf_address"] = self.rf_address
         return data

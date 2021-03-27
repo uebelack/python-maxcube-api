@@ -1,12 +1,14 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, call, patch
-from maxcube.deadline import Deadline, Timeout
+from unittest.mock import patch
 
-ZERO_TIMEOUT = Timeout('zero', 0)
-ONE_TIMEOUT = Timeout('one', 1)
-ROOT_TIMEOUT = Timeout('root', 10)
+from maxcube.deadline import Timeout
 
-@patch('maxcube.deadline.time')
+ZERO_TIMEOUT = Timeout("zero", 0)
+ONE_TIMEOUT = Timeout("one", 1)
+ROOT_TIMEOUT = Timeout("root", 10)
+
+
+@patch("maxcube.deadline.time")
 class TestDeadline(TestCase):
     """ Test Deadlines """
 
@@ -32,14 +34,14 @@ class TestDeadline(TestCase):
     def testZeroDeadlineIsAlreadyExpired(self, timeMock):
         timeMock.side_effect = [0.0, 0.0]
         deadline = ZERO_TIMEOUT.deadline()
-        self.assertEqual('zero', deadline.fullname())
+        self.assertEqual("zero", deadline.fullname())
         self.assertTrue(deadline.is_expired())
 
     def testSubtimeoutHandling(self, timeMock):
         timeMock.side_effect = [0.0, 0.1, 0.2]
         deadline = ROOT_TIMEOUT.deadline()
         subdeadline = deadline.subtimeout(ONE_TIMEOUT)
-        self.assertEqual('root:one', subdeadline.fullname())
+        self.assertEqual("root:one", subdeadline.fullname())
         self.assertAlmostEqual(0.9, subdeadline.remaining())
 
     def testSubtimeoutHandlingWhenLargerThanTimeout(self, timeMock):
@@ -51,9 +53,9 @@ class TestDeadline(TestCase):
     def testToString(self, timeMock):
         timeMock.side_effect = [0.0, 0.1]
         deadline = ONE_TIMEOUT.deadline()
-        self.assertEqual('Deadline one will expire in 0.900 seconds', str(deadline))
+        self.assertEqual("Deadline one will expire in 0.900 seconds", str(deadline))
 
     def testToStringForExpiredDeadline(self, timeMock):
         timeMock.side_effect = [0.0, 1.1]
         deadline = ONE_TIMEOUT.deadline()
-        self.assertEqual('Deadline one expired 0.100 seconds ago', str(deadline))
+        self.assertEqual("Deadline one expired 0.100 seconds ago", str(deadline))

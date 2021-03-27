@@ -1,30 +1,31 @@
 import base64
-
 from unittest import TestCase
 from unittest.mock import MagicMock, call, patch
+
 from maxcube.commander import Commander
 from maxcube.connection import Connection
 from maxcube.deadline import Deadline, Timeout
 from maxcube.message import Message
 
-L_CMD = Message('l')
-L_CMD_SUCCESS = Message('L')
-S_CMD_HEX = 'FF00'
-S_CMD = Message('s', base64.b64encode(bytearray.fromhex(S_CMD_HEX)).decode('utf-8'))
-S_CMD_SUCCESS = Message('S', '00,0,31')
-S_CMD_ERROR = Message('S', '100,1,31')
-S_CMD_THROTTLE_ERROR = Message('S', '100,1,0')
-Q_CMD = Message('q')
+L_CMD = Message("l")
+L_CMD_SUCCESS = Message("L")
+S_CMD_HEX = "FF00"
+S_CMD = Message("s", base64.b64encode(bytearray.fromhex(S_CMD_HEX)).decode("utf-8"))
+S_CMD_SUCCESS = Message("S", "00,0,31")
+S_CMD_ERROR = Message("S", "100,1,31")
+S_CMD_THROTTLE_ERROR = Message("S", "100,1,0")
+Q_CMD = Message("q")
 
-TEST_TIMEOUT = Timeout('test', 1.0)
+TEST_TIMEOUT = Timeout("test", 1.0)
 
-@patch('maxcube.commander.Connection', spec=True)
+
+@patch("maxcube.commander.Connection", spec=True)
 class TestCommander(TestCase):
     """ Test Max! Cube command handler """
 
     def init(self, ClassMock):
         self.connection = ClassMock.return_value
-        self.commander = Commander('host', 1234)
+        self.commander = Commander("host", 1234)
 
     def testDisconnectIsNoopIfAlreadyDisconnected(self, ClassMock):
         self.init(ClassMock)
@@ -37,7 +38,7 @@ class TestCommander(TestCase):
         self.connection.close.assert_not_called()
 
     def testUpdateOpensNewNonPersistantConnectionAndClosesIt(self, ClassMock):
-        messages = [Message('H'), Message('L')]
+        messages = [Message("H"), Message("L")]
         self.init(ClassMock)
         self.commander.use_persistent_connection = False
         self.connection.recv.side_effect = messages
@@ -49,7 +50,7 @@ class TestCommander(TestCase):
         self.connection.close.assert_called_once()
 
     def testUpdateSendsCommandAfterAfterTimeout(self, ClassMock):
-        messages = [Message('H'), None]
+        messages = [Message("H"), None]
         self.init(ClassMock)
         self.connection.recv.side_effect = messages
 
@@ -64,15 +65,15 @@ class TestCommander(TestCase):
 
         self.assertEqual([L_CMD_SUCCESS], self.commander.update())
 
-        self.connection.send.assert_called_once_with(Message('l'))
+        self.connection.send.assert_called_once_with(Message("l"))
         self.assertEqual(2, self.connection.recv.call_count)
         self.connection.close.assert_not_called()
 
-    def testSendRadioMsgAutoconnects(self, ClassMock = None):
+    def testSendRadioMsgAutoconnects(self, ClassMock=None):
         self.init(ClassMock)
         self.connection.recv.side_effect = [
-            L_CMD_SUCCESS, # connection preambule
-            S_CMD_SUCCESS
+            L_CMD_SUCCESS,  # connection preamble
+            S_CMD_SUCCESS,
         ]
 
         self.assertTrue(self.commander.send_radio_msg(S_CMD_HEX))
@@ -80,18 +81,18 @@ class TestCommander(TestCase):
         self.assertEqual(2, self.connection.recv.call_count)
         self.connection.close.assert_not_called()
 
-    def testSendRadioMsgOpensNewNonPersistentConnectionAndClosesIt(self, ClassMock = None):
+    def testSendRadioMsgOpensNewNonPersistentConnectionAndClosesIt(
+        self, ClassMock=None
+    ):
         self.init(ClassMock)
         self.commander.use_persistent_connection = False
         self.connection.recv.side_effect = [
-            L_CMD_SUCCESS, # connection preambule
-            S_CMD_SUCCESS
+            L_CMD_SUCCESS,  # connection preamble
+            S_CMD_SUCCESS,
         ]
 
         self.assertTrue(self.commander.send_radio_msg(S_CMD_HEX))
-        self.connection.send.assert_has_calls([
-            call(S_CMD), call(Q_CMD)
-        ])
+        self.connection.send.assert_has_calls([call(S_CMD), call(Q_CMD)])
         self.assertEqual(2, self.connection.recv.call_count)
         self.connection.close.assert_called_once()
 
@@ -100,10 +101,7 @@ class TestCommander(TestCase):
 
         self.connection.send.reset_mock()
         self.connection.recv.reset_mock()
-        self.connection.recv.side_effect = [
-            None,
-            S_CMD_SUCCESS
-        ]
+        self.connection.recv.side_effect = [None, S_CMD_SUCCESS]
 
         self.assertTrue(self.commander.send_radio_msg(S_CMD_HEX))
 
@@ -111,20 +109,22 @@ class TestCommander(TestCase):
         self.assertEqual(2, self.connection.recv.call_count)
         self.connection.close.assert_not_called()
 
-    def testSendRadioMsgClosesConnectionOnErrorAndRetriesIfReusingConnection(self, ClassMock):
+    def testSendRadioMsgClosesConnectionOnErrorAndRetriesIfReusingConnection(
+        self, ClassMock
+    ):
         self.testSendRadioMsgAutoconnects()
 
         self.connection.recv.reset_mock()
         self.connection.recv.side_effect = [
-            None, # First read before first try
+            None,  # First read before first try
         ]
         self.connection.send.reset_mock()
-        self.connection.send.side_effect = [ OSError ]
+        self.connection.send.side_effect = [OSError]
 
         newConnection = MagicMock(Connection)
         ClassMock.side_effect = [newConnection]
         newConnection.recv.side_effect = [
-            L_CMD_SUCCESS, # Connection preamble
+            L_CMD_SUCCESS,  # Connection preamble
             S_CMD_SUCCESS,
         ]
 
@@ -139,14 +139,14 @@ class TestCommander(TestCase):
         newConnection.close.assert_not_called()
 
     def __send_radio_msg(self, msg: Message, deadline: Deadline):
-        with patch('maxcube.commander.Timeout.deadline') as deadlineMock:
+        with patch("maxcube.commander.Timeout.deadline") as deadlineMock:
             deadlineMock.return_value = deadline
             return self.commander.send_radio_msg(msg)
 
     def testSendRadioMsgShouldNotRetryOnErrorWhenConnectionIsNew(self, ClassMock):
         self.init(ClassMock)
-        self.connection.recv.side_effect = [ L_CMD_SUCCESS ]
-        self.connection.send.side_effect = [ OSError ]
+        self.connection.recv.side_effect = [L_CMD_SUCCESS]
+        self.connection.send.side_effect = [OSError]
 
         deadline = MagicMock(Deadline)
         deadline.is_expired.side_effect = [False, True]
@@ -160,7 +160,7 @@ class TestCommander(TestCase):
 
     def testSendRadioMsgFailsOnLogicalError(self, ClassMock):
         self.init(ClassMock)
-        self.connection.recv.side_effect = [ L_CMD_SUCCESS, S_CMD_ERROR ]
+        self.connection.recv.side_effect = [L_CMD_SUCCESS, S_CMD_ERROR]
 
         deadline: Deadline = MagicMock(Deadline)
         deadline.is_expired.side_effect = [False, True]
@@ -174,7 +174,7 @@ class TestCommander(TestCase):
 
     def testSendRadioMsgRetriesOnThrottlingError(self, ClassMock):
         self.init(ClassMock)
-        self.connection.recv.side_effect = [ L_CMD_SUCCESS, S_CMD_THROTTLE_ERROR ]
+        self.connection.recv.side_effect = [L_CMD_SUCCESS, S_CMD_THROTTLE_ERROR]
 
         deadline: Deadline = MagicMock(Deadline)
         deadline.is_expired.side_effect = [False, True]
