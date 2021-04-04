@@ -38,6 +38,7 @@ repos:
       - id: check-executables-have-shebangs
         stages: [manual]
       - id: no-commit-to-branch
+        stages: [commit]
         args:
           - --branch=master
   - repo: https://github.com/adrienverge/yamllint.git
