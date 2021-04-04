@@ -27,6 +27,8 @@ jobs:
             if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Pre-commit hooks
         uses: pre-commit/action@v2.0.0
+        with:
+          extra_args: --hook-stage=push
       - name: Unit Test Coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
