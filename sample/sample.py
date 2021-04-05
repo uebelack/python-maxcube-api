@@ -1,3 +1,5 @@
+import os
+
 from maxcube.cube import MaxCube
 from maxcube.device import (
     MAX_DEVICE_MODE_AUTOMATIC,
@@ -8,7 +10,7 @@ from maxcube.device import (
     MAX_WINDOW_SHUTTER,
 )
 
-cube = MaxCube("192.168.0.20", 62910)
+cube = MaxCube(os.environ.get("MAXCUBE_IP", "192.168.0.20"), 62910)
 
 print("Serial: %s" % (cube.serial))
 for room in cube.rooms:
@@ -63,7 +65,7 @@ for device in cube.devices:
 
 for device in cube.devices:
     print(device)
-    if cube.is_wallthermostat(device) or cube.is_thermostat(device):
+    if device.is_wallthermostat() or device.is_thermostat():
         print("Setting temp")
         cube.set_target_temperature(device, 8)
     else:
@@ -73,7 +75,7 @@ print("")
 
 for device in cube.devices:
     print(device)
-    if cube.is_wallthermostat(device):
+    if device.is_wallthermostat():
         print("Setting mode")
         cube.set_mode(device, MAX_DEVICE_MODE_MANUAL)
     else:
