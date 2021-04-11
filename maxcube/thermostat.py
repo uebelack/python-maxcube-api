@@ -1,4 +1,4 @@
-from time import localtime
+from datetime import datetime
 from typing import Dict, List
 
 from maxcube.device import MODE_NAMES, MaxDevice
@@ -39,11 +39,15 @@ class MaxThermostat(MaxDevice):
             f"valve={self.valve_position}",
         )
 
-    def get_current_temp_in_auto_mode(self):
-        t = localtime()
-        weekday = PROG_DAYS[t.tm_wday]
-        time = f"{t.tm_hour:02}:{t.tm_min:02}"
+    def get_programmed_temp_at(self, dt: datetime):
+        """Retrieve the programmed temperature at the given instant."""
+        weekday = PROG_DAYS[dt.weekday()]
+        time = f"{dt.hour:02}:{dt.minute:02}"
         for point in self.programme.get(weekday, []):
             if time < point["until"]:
                 return point["temp"]
         return None
+
+    def get_current_temp_in_auto_mode(self):
+        """DEPRECATED: use get_programmed_temp_at instead."""
+        return self.get_programmed_temp_at(datetime.now())
