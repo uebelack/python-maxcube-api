@@ -73,13 +73,13 @@ class Commander(object):
         try:
             response = self.__call(request, deadline)
             duty_cycle, status_code, free_slots = response.arg.split(",", 3)
-            if int(status_code) == 0:
+            if status_code == "0":
                 return True
             logger.debug(
                 "Radio message %s was not send [DutyCycle:%s, StatusCode:%s, FreeSlots:%s]"
                 % (request, duty_cycle, status_code, free_slots)
             )
-            if int(duty_cycle) == 100 and int(free_slots) == 0:
+            if int(duty_cycle, 16) == 100 and int(free_slots, 16) == 0:
                 sleep(deadline.remaining(upper_bound=10.0))
         except Exception as ex:
             logger.error("Error sending radio message to Max! Cube: " + str(ex))

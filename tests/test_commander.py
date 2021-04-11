@@ -12,8 +12,8 @@ L_CMD_SUCCESS = Message("L")
 S_CMD_HEX = "FF00"
 S_CMD = Message("s", base64.b64encode(bytearray.fromhex(S_CMD_HEX)).decode("utf-8"))
 S_CMD_SUCCESS = Message("S", "00,0,31")
-S_CMD_ERROR = Message("S", "100,1,31")
-S_CMD_THROTTLE_ERROR = Message("S", "100,1,0")
+S_CMD_ERROR = Message("S", "64,1,1f")
+S_CMD_THROTTLE_ERROR = Message("S", "64,1,0")
 Q_CMD = Message("q")
 
 TEST_TIMEOUT = Timeout("test", 1.0)
