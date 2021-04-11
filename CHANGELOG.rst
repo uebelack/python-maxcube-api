@@ -18,3 +18,12 @@
    - Serial number of the cube was not extracted from handshake
    - When changing to auto mode, use weekly programme to fetch current temperature
    - Make MAX! Cube TCP port optional
+
+### Version 0.4.2
+ * Bug fixes:
+   - Interpret correctly S command error responses (https://github.com/home-assistant/core/issues/49075)
+   - Support application timezone configuration (https://github.com/home-assistant/core/issues/49076)
+ * Improvements in device logging
+ * Build improvements:
+   * Move from Travis to Github Actions to execute validation actions
+   * Add code style and quality checks to the validation actions
