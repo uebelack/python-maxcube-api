@@ -1,7 +1,9 @@
 import base64
+from datetime import datetime
 import json
 import logging
 import struct
+from typing import Callable
 
 from maxcube.device import (
     MAX_CUBE,
@@ -42,7 +44,12 @@ DAYS = [
 
 
 class MaxCube(MaxDevice):
-    def __init__(self, host: str, port: int = DEFAULT_PORT):
+    def __init__(
+        self,
+        host: str,
+        port: int = DEFAULT_PORT,
+        now: Callable[[], datetime] = datetime.now,
+    ):
         super(MaxCube, self).__init__()
         self.__commander = Commander(host, port)
         self.name = "Cube"
@@ -50,6 +57,7 @@ class MaxCube(MaxDevice):
         self.firmware_version = None
         self.devices = []
         self.rooms = []
+        self._now: Callable[[], datetime] = now
         self.update()
         self.log()
 
@@ -301,8 +309,8 @@ class MaxCube(MaxDevice):
             if temperature > 0:
                 thermostat.target_temperature = int(temperature * 2) / 2.0
             elif mode == MAX_DEVICE_MODE_AUTOMATIC:
-                thermostat.target_temperature = (
-                    thermostat.get_current_temp_in_auto_mode()
+                thermostat.target_temperature = thermostat.get_programmed_temp_at(
+                    self._now()
                 )
             return True
         return False

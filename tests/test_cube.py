@@ -1,4 +1,4 @@
-from time import strptime
+from datetime import datetime
 from typing import List
 from unittest import TestCase
 from unittest.mock import patch
@@ -104,7 +104,7 @@ class TestMaxCube(TestCase):
         self.commander = ClassMock.return_value
         self.commander.update.return_value = responses
 
-        self.cube = MaxCube("host", 1234)
+        self.cube = MaxCube("host", 1234, now=lambda: datetime(2012, 10, 22, 5, 30))
 
         self.commander.update.assert_called_once()
         self.commander.update.reset_mock()
@@ -424,10 +424,7 @@ class TestMaxCube(TestCase):
             ],
         )
 
-    @patch("maxcube.thermostat.localtime")
-    def test_set_auto_mode_read_temp_from_program(self, localtime_mock, ClassMock):
-        localtime_mock.return_value = strptime("2012-10-22T05:30", "%Y-%m-%dT%H:%M")
-        print(localtime_mock.return_value)
+    def test_set_auto_mode_read_temp_from_program(self, ClassMock):
         self.init(ClassMock, INIT_RESPONSE_2)
         device = self.cube.devices[0]
         self.assertEqual(8.0, device.target_temperature)
