@@ -9,8 +9,11 @@ class Message:
     def reply_cmd(self) -> str:
         return self.cmd.upper()
 
+    def __str__(self) -> str:
+        return f"{self.cmd}:{self.arg}"
+
     def encode(self) -> bytes:
-        return ("%s:%s\r\n" % (self.cmd, self.arg)).encode("utf-8")
+        return (f"{self.cmd}:{self.arg}\r\n").encode("utf-8")
 
     @staticmethod
     def decode(line: bytes) -> "Message":

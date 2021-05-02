@@ -114,17 +114,20 @@ class MaxCube(MaxDevice):
 
     def __parse_responses(self, messages):
         for msg in messages:
-            cmd = msg.cmd
-            if cmd == "C":
-                self.parse_c_message(msg.arg)
-            elif cmd == "H":
-                self.parse_h_message(msg.arg)
-            elif cmd == "L":
-                self.parse_l_message(msg.arg)
-            elif cmd == "M":
-                self.parse_m_message(msg.arg)
-            else:
-                logger.debug("Ignored unsupported message: %s" % (msg))
+            try:
+                cmd = msg.cmd
+                if cmd == "C":
+                    self.parse_c_message(msg.arg)
+                elif cmd == "H":
+                    self.parse_h_message(msg.arg)
+                elif cmd == "L":
+                    self.parse_l_message(msg.arg)
+                elif cmd == "M":
+                    self.parse_m_message(msg.arg)
+                else:
+                    logger.debug("Ignored unsupported message: %s" % (msg))
+            except Exception:
+                logger.warn(f"Error processing response message {msg}", exc_info=True)
 
     def parse_c_message(self, message):
         logger.debug("Parsing c_message: " + message)
