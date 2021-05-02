@@ -27,3 +27,6 @@
  * Build improvements:
    * Move from Travis to Github Actions to execute validation actions
    * Add code style and quality checks to the validation actions
+
+### Version 0.4.3
+ * Improve logging for invalid message and expired deadlines
