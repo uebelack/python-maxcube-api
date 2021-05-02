@@ -139,7 +139,7 @@ class TestCommander(TestCase):
         newConnection.close.assert_not_called()
 
     def __send_radio_msg(self, msg: Message, deadline: Deadline):
-        with patch("maxcube.commander.Timeout.deadline") as deadlineMock:
+        with patch("maxcube.commander.Deadline") as deadlineMock:
             deadlineMock.return_value = deadline
             return self.commander.send_radio_msg(msg)
 
@@ -150,7 +150,7 @@ class TestCommander(TestCase):
 
         deadline = MagicMock(Deadline)
         deadline.is_expired.side_effect = [False, True]
-        deadline.subtimeout.return_value = TEST_TIMEOUT.deadline()
+        deadline.subtimeout.return_value = Deadline(TEST_TIMEOUT)
 
         self.assertFalse(self.__send_radio_msg(S_CMD_HEX, deadline))
 
@@ -164,7 +164,7 @@ class TestCommander(TestCase):
 
         deadline: Deadline = MagicMock(Deadline)
         deadline.is_expired.side_effect = [False, True]
-        deadline.subtimeout.return_value = TEST_TIMEOUT.deadline()
+        deadline.subtimeout.return_value = Deadline(TEST_TIMEOUT)
         self.assertFalse(self.__send_radio_msg(S_CMD_HEX, deadline))
 
         self.connection.send.assert_called_once_with(S_CMD)
@@ -179,7 +179,7 @@ class TestCommander(TestCase):
         deadline: Deadline = MagicMock(Deadline)
         deadline.is_expired.side_effect = [False, True]
         deadline.remaining.return_value = 0.1
-        deadline.subtimeout.return_value = TEST_TIMEOUT.deadline()
+        deadline.subtimeout.return_value = Deadline(TEST_TIMEOUT)
         self.assertFalse(self.__send_radio_msg(S_CMD_HEX, deadline))
 
         self.connection.send.assert_called_once_with(S_CMD)
