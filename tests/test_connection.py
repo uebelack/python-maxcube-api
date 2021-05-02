@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from maxcube.connection import Connection
-from maxcube.deadline import Timeout
+from maxcube.deadline import Deadline, Timeout
 from maxcube.message import Message
 
 TEST_TIMEOUT = Timeout("test", 1000.0)
@@ -24,7 +24,7 @@ class TestConnection(TestCase):
         self.socket.recv.return_value = b"A:B\r\n"
 
         self.assertEqual(
-            Message("A", "B"), self.connection.recv(TEST_TIMEOUT.deadline())
+            Message("A", "B"), self.connection.recv(Deadline(TEST_TIMEOUT))
         )
         self.socket.close.assert_not_called()
 
@@ -33,7 +33,7 @@ class TestConnection(TestCase):
         self.socket.recv.side_effect = [b"A:", b"B\r\n"]
 
         self.assertEqual(
-            Message("A", "B"), self.connection.recv(TEST_TIMEOUT.deadline())
+            Message("A", "B"), self.connection.recv(Deadline(TEST_TIMEOUT))
         )
 
     def testReadMultipleLines(self, socketMock):
@@ -41,25 +41,23 @@ class TestConnection(TestCase):
         self.socket.recv.return_value = b"A:B\r\nC\r\n"
 
         self.assertEqual(
-            Message("A", "B"), self.connection.recv(TEST_TIMEOUT.deadline())
+            Message("A", "B"), self.connection.recv(Deadline(TEST_TIMEOUT))
         )
         self.socket.recv.reset_mock()
-        self.assertEqual(
-            Message("C", ""), self.connection.recv(TEST_TIMEOUT.deadline())
-        )
+        self.assertEqual(Message("C", ""), self.connection.recv(Deadline(TEST_TIMEOUT)))
 
     def testReadAtConnectionClosing(self, socketMock):
         self.connect(socketMock)
         self.socket.recv.return_value = b""
 
-        self.assertIsNone(self.connection.recv(TEST_TIMEOUT.deadline()))
+        self.assertIsNone(self.connection.recv(Deadline(TEST_TIMEOUT)))
         self.socket.close.assert_called_once()
 
     def testReadTimeout(self, socketMock):
         self.connect(socketMock)
         self.socket.recv.side_effect = [socket.timeout]
 
-        self.assertIsNone(self.connection.recv(TEST_TIMEOUT.deadline()))
+        self.assertIsNone(self.connection.recv(Deadline(TEST_TIMEOUT)))
         self.socket.close.assert_not_called()
 
     def testSendMessage(self, socketMock):

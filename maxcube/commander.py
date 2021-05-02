@@ -45,7 +45,7 @@ class Commander(object):
         return result
 
     def update(self) -> List[Message]:
-        deadline = UPDATE_TIMEOUT.deadline()
+        deadline = Deadline(UPDATE_TIMEOUT)
         if self.__is_connected():
             try:
                 response = self.__call(L_MSG, deadline)
@@ -60,7 +60,7 @@ class Commander(object):
         return self.get_unsolicited_messages()
 
     def send_radio_msg(self, hex_radio_msg: str) -> bool:
-        deadline = SEND_RADIO_MSG_TIMEOUT.deadline()
+        deadline = Deadline(SEND_RADIO_MSG_TIMEOUT)
         request = Message(
             "s", base64.b64encode(bytearray.fromhex(hex_radio_msg)).decode("utf-8")
         )
