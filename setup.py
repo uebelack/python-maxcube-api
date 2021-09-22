@@ -12,7 +12,7 @@ setup(
     author="David Uebelacker",
     author_email="david@uebelacker.ch",
     url="https://github.com/hackercowboy/python-maxcube-api.git",
-    license=license,
+    license='MIT',
     packages=["maxcube"],
     test_suite="tests",
     python_requires=">=3.7",
