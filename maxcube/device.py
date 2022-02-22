@@ -15,6 +15,18 @@ MAX_DEVICE_MODE_BOOST = 3
 MAX_DEVICE_BATTERY_OK = 0
 MAX_DEVICE_BATTERY_LOW = 1
 
+MAX_DEVICE_PANEL_UNLOCKED = 0
+MAX_DEVICE_PANEL_LOCKED = 1
+
+MAX_DEVICE_LINK_STATUS_OK = 0
+MAX_DEVICE_LINK_STATUS_ERROR = 1
+
+MAX_DEVICE_STATUS_NOT_INITIALIZED = 0
+MAX_DEVICE_STATUS_INITIALIZED = 1
+
+MAX_DEVICE_ERROR_NO = 0
+MAX_DEVICE_ERROR_YES = 1
+
 MODE_NAMES = {
     MAX_DEVICE_MODE_AUTOMATIC: "auto",
     MAX_DEVICE_MODE_MANUAL: "manual",
@@ -30,6 +42,10 @@ class MaxDevice(object):
         self.room_id = None
         self.name = None
         self.serial = None
+        self.panel_locked = None
+        self.link_status = None
+        self.status_inited = None
+        self.error = None
         self.battery = None
         self.programme = None
 
@@ -49,6 +65,14 @@ class MaxDevice(object):
         state = "".join("," + s for s in args if s)
         if self.battery == MAX_DEVICE_BATTERY_LOW:
             state = ",LOW_BATT" + state
+        if self.error == MAX_DEVICE_ERROR_YES:
+            state = ",ERROR" + state
+        if self.link_status == MAX_DEVICE_LINK_STATUS_ERROR:
+            state = ",LINK_ERROR" + state
+        if self.panel_locked == MAX_DEVICE_PANEL_LOCKED:
+            state = ",LOCKED" + state
+        if self.status_inited == MAX_DEVICE_STATUS_NOT_INITIALIZED:
+            state = ",NOT_INITIALIZED" + state
         return f"{kind} sn={self.serial},rf={self.rf_address},name={self.name}" + state
 
     def __str__(self):
