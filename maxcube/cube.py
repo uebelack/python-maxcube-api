@@ -232,16 +232,19 @@ class MaxCube(MaxDevice):
             device_rf_address = self.parse_rf_address(data[pos + 1 : pos + 4])
 
             device = self.device_by_rf(device_rf_address)
+            bits1, bits2 = struct.unpack("BB", bytearray(data[pos + 5 : pos + 7]))
 
             if device:
-                bits1, bits2 = struct.unpack("BB", bytearray(data[pos + 5 : pos + 7]))
                 device.battery = self.resolve_device_battery(bits2)
+                device.link_error = self.resolve_device_link_error(bits2)
+                device.initialized = self.resolve_device_initialized(bits1)
+                device.error = self.resolve_device_error(bits1)
 
             # Thermostat or Wall Thermostat
             if device and (device.is_thermostat() or device.is_wallthermostat()):
                 device.target_temperature = (data[pos + 8] & 0x7F) / 2.0
-                bits1, bits2 = struct.unpack("BB", bytearray(data[pos + 5 : pos + 7]))
                 device.mode = self.resolve_device_mode(bits2)
+                device.panel_locked = self.resolve_device_panel_locked(bits2)
 
             # Thermostat
             if device and device.is_thermostat():
@@ -366,8 +369,24 @@ class MaxCube(MaxDevice):
         return bits & 3
 
     @classmethod
+    def resolve_device_panel_locked(cls, bits):
+        return 1 if bits & 0b00100000 else 0
+
+    @classmethod
+    def resolve_device_link_error(cls, bits):
+        return 1 if bits & 0b01000000 else 0
+
+    @classmethod
     def resolve_device_battery(cls, bits):
         return bits >> 7
+
+    @classmethod
+    def resolve_device_initialized(cls, bits):
+        return 1 if bits & 0b00000010 else 0
+
+    @classmethod
+    def resolve_device_error(cls, bits):
+        return 1 if bits & 0b00001000 else 0
 
     @classmethod
     def parse_rf_address(cls, address):
