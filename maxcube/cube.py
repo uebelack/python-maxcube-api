@@ -148,7 +148,8 @@ class MaxCube(MaxDevice):
             device.eco_temperature = data[19] / 2.0
             device.max_temperature = data[20] / 2.0
             device.min_temperature = data[21] / 2.0
-
+            device.programme = get_programme(data[22:204])
+            
         if device and device.is_windowshutter():
             # Pure Speculation based on this:
             # Before: [17][12][162][178][4][0][20][15]KEQ0839778
